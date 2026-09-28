@@ -59,8 +59,9 @@ android {
         applicationId = "io.github.miuzarte.scrcpyforandroid"
         minSdk = 26
         targetSdk = 37
-        versionCode = 58
+        versionCode = providers.gradleProperty("ciVersionCode").orNull?.toInt() ?: 58
         versionName = "0.6.6-flip5.11"
+        providers.gradleProperty("ciVersionName").orNull?.let { versionName = it }
 
         externalNativeBuild {
             cmake {

@@ -31,6 +31,10 @@
 
 <p align="center">外屏设备页 · 内屏投屏运行状态 · 投屏工具菜单</p>
 
+## 下载
+
+[下载最新 Flip5 专用 Release APK](https://github.com/xiaomaoju/ScrcpyForAndroid/releases/latest)（ARM64）。推送到主分支后自动构建发布，安装包与 SHA256 校验文件均在 Releases 页面。
+
 ## 本次改动概览
 
 - **外屏紧凑界面**：针对 Flip5 外屏重新排布设备、配对、终端、文件和设置页面，连接与启动操作常驻，参数独立滚动；固定外屏字号，并避让系统栏、圆角、缺口和输入法。
@@ -219,6 +223,18 @@ ANDROID_SERIAL=<专用模拟器序列号> sh gradlew :app:connectedDebugAndroidT
    - 装个第三方桌面
 
 ## 构建
+
+### GitHub 自动发布
+
+推送到 `main` 后，[Android Build and Release](https://github.com/xiaomaoju/ScrcpyForAndroid/actions/workflows/android.yml) 会自动运行 JVM 测试、构建并验证签名，然后发布 ARM64 Release APK 与 `SHA256SUMS.txt`。也可在 Actions 页面选择 **Run workflow** 手动发布，或推送 `v*` 标签触发。测试或构建失败时不会发布。
+
+自动版本使用 `<versionName>-build.<运行编号>`，自动标签为 `v<自动版本>`；手动推送标签时保留标签名。CI 的 `versionCode` 为 `100000 + 运行编号`，便于后续安装覆盖升级；本地不传 CI 参数时仍使用源码版本。主分支发布会更新 Releases 的 Latest 下载入口。自动构建不代表新增真机验证，适配状态仍以本文及测试版说明为准。
+
+签名通过仓库 **Settings → Secrets and variables → Actions** 的四个 Secrets 提供：`ANDROID_KEYSTORE_BASE64`、`ANDROID_STORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。工作流缺少任何一项会明确失败，不会发布未签名 APK；私钥和密码不提交到仓库。迁移或 Fork 仓库时需要重新配置这些 Secrets，并保留同一签名密钥。
+
+**首次从旧 Debug 测试版切换到 Release 时，因签名不同需要卸载旧版，请先备份应用数据。** 此后自动发布使用同一专用密钥，可覆盖升级。
+
+### 本地构建
 
 - JDK 21
 - Android SDK (`compileSdk 37` / `buildTools 37.0.0`)
