@@ -232,6 +232,8 @@ ANDROID_SERIAL=<专用模拟器序列号> sh gradlew :app:connectedDebugAndroidT
 
 签名通过仓库 **Settings → Secrets and variables → Actions** 的四个 Secrets 提供：`ANDROID_KEYSTORE_BASE64`、`ANDROID_STORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。工作流缺少任何一项会明确失败，不会发布未签名 APK；私钥和密码不提交到仓库。迁移或 Fork 仓库时需要重新配置这些 Secrets，并保留同一签名密钥。
 
+Fork 后需在仓库 Actions 页面启用工作流。CI 使用新版 Android CLI 安装 `platforms;android-37.0`，与源码的 `compileSdk 37` 对应；旧版 SDK Manager 可能无法找到该平台包。
+
 **首次从旧 Debug 测试版切换到 Release 时，因签名不同需要卸载旧版，请先备份应用数据。** 此后自动发布使用同一专用密钥，可覆盖升级。
 
 ### 本地构建
