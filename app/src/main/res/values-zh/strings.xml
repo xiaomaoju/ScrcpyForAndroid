@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="autocast_tile_name">内屏投屏</string>
+    <string name="device_activate_flip_inner">激活zlip内屏</string>
+    <string name="device_activate_flip_inner_summary">外屏连接本机时自动准备内屏；下次投屏生效</string>
     <string name="app_name">Scrcpy for Android</string>
 
     <!-- Main Tab Labels -->
@@ -629,4 +632,51 @@
     <string name="language_english">英语</string>
     <string name="language_chinese">中文</string>
 
+    <string name="cover_switch_touch">切换为直接触摸</string>
+    <string name="cover_switch_mouse">切换为鼠标触控板</string>
+    <string name="cover_details">软件详情</string>
+    <string name="cover_exit">退出投屏控制</string>
+    <string name="cover_return_devices">返回设备页（保留投屏）</string>
+    <string name="cover_stopped">投屏已停止</string>
+    <string name="cover_trackpad_hint">滑动定位，轻点确认\n双指滚动，长按拖动</string>
+    <string name="cover_control_disabled">当前会话未启用控制</string>
+    <string name="cover_keyboard">键盘输入</string>
+    <string name="cover_remote_back">远端返回</string>
+    <string name="cover_remote_home">远端主页</string>
+    <string name="cover_remote_recent">远端最近任务</string>
+    <string name="cover_tools">工具</string>
+    <string name="cover_close_panel">收起面板</string>
+    <string name="cover_mouse_pad">鼠标触控板</string>
+    <string name="cover_touch_mode">直接触摸</string>
+    <string name="cover_two_pane">切换双区布局</string>
+    <string name="cover_auto_layout">恢复自动布局</string>
+    <string name="autocast_name">Flip5 内屏投屏</string>
+    <string name="autocast_open">打开内屏</string>
+    <string name="autocast_continue">继续操作</string>
+    <string name="autocast_repair">修复连接</string>
+    <string name="autocast_opening">正在打开…</string>
+    <string name="autocast_widget_hint">在外屏操作这台手机</string>
+    <string name="autocast_connecting">正在连接本机…</string>
+    <string name="autocast_setup">首次设置本机连接</string>
+    <string name="autocast_pairing">正在配对本机…</string>
+    <string name="autocast_ready">连接已就绪，合盖即可开始</string>
+    <string name="autocast_preparing">正在准备内屏…</string>
+    <string name="autocast_starting">正在等待内屏画面…</string>
+    <string name="autocast_running">正在操作内屏</string>
+    <string name="autocast_recovering">正在恢复连接…</string>
+    <string name="autocast_stopping">正在恢复屏幕状态…</string>
+    <string name="autocast_failed">暂时无法打开内屏</string>
+    <string name="autocast_unsupported">此入口仅支持三星 Galaxy Z Flip5。</string>
+    <string name="autocast_end">结束投屏</string>
+    <string name="autocast_close">关闭</string>
+    <string name="autocast_retry">重试</string>
+    <string name="autocast_original_app">原软件设置与设备</string>
+    <string name="autocast_setup_action">打开无线调试</string>
+    <string name="autocast_pair_code">输入配对码</string>
+    <string name="autocast_notification_needed">首次配对需要通过通知输入配对码，以保持系统配对窗口打开。请点下方按钮启用通知，再返回此页继续。</string>
+    <string name="autocast_setup_hint">先启用开发者选项和无线调试，点“使用配对码配对设备”。保持配对窗口打开，下拉通知栏，在“Flip5 内屏投屏”通知中输入六位配对码。软件会自动识别本机地址与端口。</string>
+    <string name="autocast_add_widget">在系统“设置 → 外屏 → 小组件”添加“Flip5 内屏投屏”。以后合盖点“打开内屏”，即可自动连接并进入操控。</string>
+    <string name="autocast_control_hint">滑动移动，轻点点击。结束投屏会恢复本次临时切换的折叠状态。</string>
+    <string name="autocast_copy_diagnostics">复制诊断</string>
+    <string name="autocast_diagnostics_copied">已复制诊断</string>
 </resources>

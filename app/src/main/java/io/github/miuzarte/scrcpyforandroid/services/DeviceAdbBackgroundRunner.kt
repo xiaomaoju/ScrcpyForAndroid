@@ -34,10 +34,12 @@ internal class DeviceAdbBackgroundRunner: Closeable {
             }
 
             delay(intervalMs)
+            if (!isForeground()) continue
             val alive = runCatching {
                 keepAliveCheck(host, port)
             }.getOrElse { false }
             if (alive) continue
+            if (!isForeground()) continue
             if (!shouldAutoReconnect()) break
 
             try {
@@ -84,9 +86,9 @@ internal class DeviceAdbBackgroundRunner: Closeable {
             val quickCandidates = savedShortcuts()
             if (quickCandidates.isNotEmpty()) {
                 for (device in quickCandidates) {
-                    if (isConnected() || isAdbConnecting()) break
+                    if (isConnected() || isAdbConnecting() || !isForeground()) break
                     for (addr in device.addresses) {
-                        if (isConnected() || isAdbConnecting()) break
+                        if (isConnected() || isAdbConnecting() || !isForeground()) break
                         val target = ConnectionTarget.unmarshalFrom(addr) ?: continue
                         // 跳过 USB 地址 (自动重连不支持 USB 设备的 TCP 连接)
                         if (target.connectionType == DeviceConnectionType.USB) continue
@@ -94,6 +96,7 @@ internal class DeviceAdbBackgroundRunner: Closeable {
                         val targetKey = "${target.host}:${target.port}"
                         if (quickConnectTriedOnce.contains(targetKey)) continue
                         if (!probeTcpReachable(target.host, target.port)) continue
+                        if (!isForeground()) break
                         quickConnectTriedOnce += targetKey
                         if (connectKnownShortcut(device, target)) break
                     }
@@ -134,7 +137,7 @@ internal class DeviceAdbBackgroundRunner: Closeable {
                 }
             }
 
-            if (isConnected() || isAdbConnecting()) {
+            if (isConnected() || isAdbConnecting() || !isForeground()) {
                 delay(retryIntervalMs)
                 continue
             }

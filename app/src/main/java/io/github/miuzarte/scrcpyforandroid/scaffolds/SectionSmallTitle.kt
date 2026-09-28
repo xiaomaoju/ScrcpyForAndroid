@@ -13,7 +13,7 @@ fun SectionSmallTitle(
     text: String,
     modifier: Modifier = Modifier,
     textColor: Color = colorScheme.onBackgroundVariant,
-    insideMargin: PaddingValues = PaddingValues(16.dp, 8.dp),
+    insideMargin: PaddingValues = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) PaddingValues(8.dp, 4.dp) else PaddingValues(16.dp, 8.dp),
 ) {
     SmallTitle(
         text = text,

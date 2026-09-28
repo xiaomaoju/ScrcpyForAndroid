@@ -15,11 +15,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -32,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.miuzarte.scrcpyforandroid.BuildConfig
 import io.github.miuzarte.scrcpyforandroid.NativeCoreFacade
 import io.github.miuzarte.scrcpyforandroid.R
@@ -135,7 +136,10 @@ sealed interface RootScreen: NavKey {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun MainScreen() {
+    val isCover = LocalCoverDisplay.current
+    val coverKeyboardVisible = isCover && WindowInsets.isImeVisible
     // Environment
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -264,23 +268,14 @@ fun MainScreen() {
     // Scrcpy instance and session state
     // 实例与连接服务由 AppRuntime 持有, 跨 Activity 重建复用;
     // 配置变化只回写 sessionConfig, 重建实例会丢掉正在投屏的会话与连接状态
-    val customServerUri = asBundle.customServerUri
-        .ifBlank { null }
-    val customServerVersion = asBundle.customServerVersion
-        .ifBlank { Scrcpy.DEFAULT_SERVER_VERSION }
-    val serverRemotePath = asBundle.serverRemotePath
-        .ifBlank { AppSettings.SERVER_REMOTE_PATH.defaultValue }
-    val lowLatency = asBundle.lowLatency
-    val sessionConfig = Scrcpy.SessionConfig(
-        customServerUri = customServerUri,
-        serverVersion = customServerVersion,
-        serverRemotePath = serverRemotePath,
-        lowLatency = lowLatency,
-    )
+    val sessionConfig = ScrcpyLaunchSettings.session(asBundle)
 
     val session = remember(appContext) { AppRuntime.obtainSession(sessionConfig) }
     val scrcpy = session.scrcpy
     val deviceConnectionServices = session.services
+    val currentSession by scrcpy.currentSessionState.collectAsState()
+    var coverControlRequested by rememberSaveable { mutableStateOf(false) }
+    val coverControlActive = isCover && coverControlRequested
 
     LaunchedEffect(sessionConfig) {
         scrcpy.sessionConfig = sessionConfig
@@ -289,6 +284,8 @@ fun MainScreen() {
     val deviceTabViewModelFactory = remember(scrcpy, deviceConnectionServices) {
         DeviceTabViewModel.Factory(scrcpy, deviceConnectionServices)
     }
+    val deviceViewModel: DeviceTabViewModel = viewModel(factory = deviceTabViewModelFactory)
+    SideEffect { deviceViewModel.hostOnCover = isCover }
 
     // Side-effect launchers and composition locals
     val picker = rememberLauncherForActivityResult(
@@ -371,7 +368,8 @@ fun MainScreen() {
             val job = coroutineContext[Job]
             pagerNavigationJob = job
             try {
-                pagerState.animateScrollToPage(
+                if (isCover) pagerState.scrollToPage(targetIndex)
+                else pagerState.animateScrollToPage(
                     page = targetIndex,
                     animationSpec = spring(
                         dampingRatio = UiMotion.PAGE_SWITCH_DAMPING_RATIO,
@@ -401,6 +399,10 @@ fun MainScreen() {
 
     val textMainPressBackAgain = stringResource(R.string.main_press_back_again)
     fun handleBackNavigation() {
+        if (coverControlActive && rootBackStack.size == 1 && selectedTabIndex == MainBottomTabDestination.Devices.ordinal) {
+            coverControlRequested = false
+            return
+        }
         when {
             rootBackStack.size > 1 -> rootNavigator.pop()
 
@@ -526,8 +528,30 @@ fun MainScreen() {
             }
 
             Scaffold(
+                topBar = { if (isCover && !coverKeyboardVisible) io.github.miuzarte.scrcpyforandroid.scaffolds.CoverSnackbarHost(snackHostState) },
                 bottomBar = {
-                    if (!asBundle.floatingBottomBar) {
+                    if (coverControlActive || coverKeyboardVisible) {
+                        // The compact page-title picker replaces the four-tab bar in the side pane.
+                    } else if (isCover) {
+                        Row(Modifier.fillMaxWidth().height(if (LocalCoverContentHeight.current < 260.dp) 36.dp else 40.dp).background(colorScheme.surface)) {
+                            tabs.forEach { tab ->
+                                Column(
+                                    modifier = Modifier.weight(1f).fillMaxHeight().testTag("main-tab-${tab.name}")
+                                        .selectable(
+                                            selected = currentTab == tab,
+                                            role = androidx.compose.ui.semantics.Role.Tab,
+                                            onClick = { navigateToTab(tab) },
+                                        ),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                ) {
+                                    val tint = if (currentTab == tab) colorScheme.primary else colorScheme.onSurface
+                                    Icon(tab.icon, contentDescription = stringResource(tab.labelResId), tint = tint, modifier = Modifier.size(20.dp))
+                                    Text(stringResource(tab.labelResId), fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = tint)
+                                }
+                            }
+                        }
+                    } else if (!asBundle.floatingBottomBar) {
                         // 底栏不跟随渐进模糊, 渐进模糊回退到高斯模糊, 没启用模糊则无模糊
                         BlurredBar(backdrop = blurBackdrop, allowProgressive = false) {
                             NavigationBar(
@@ -550,10 +574,10 @@ fun MainScreen() {
                         }
                     }
                 },
-                snackbarHost = { SnackbarHost(snackHostState) },
+                snackbarHost = { if (!isCover) SnackbarHost(snackHostState) },
             ) { contentPadding ->
                 val bottomInnerPadding =
-                    if (asBundle.floatingBottomBar)
+                    if (asBundle.floatingBottomBar && !isCover)
                         12.dp + 64.dp + contentPadding.calculateBottomPadding()
                     else
                         contentPadding.calculateBottomPadding()
@@ -584,13 +608,13 @@ fun MainScreen() {
                                 ),
                             state = pagerState,
                             beyondViewportPageCount = 1,
-                            userScrollEnabled = !pagerGestureLocked,
+                            userScrollEnabled = !pagerGestureLocked && !coverControlActive,
                         ) { page ->
                             val tab = tabs[page]
                             saveableStateHolder.SaveableStateProvider(tab.name) {
                                 when (tab) {
                                     MainBottomTabDestination.Devices -> DeviceTabScreen(
-                                        viewModelFactory = deviceTabViewModelFactory,
+                                        viewModel = deviceViewModel,
                                         scrollBehavior = devicesPageScrollBehavior,
                                         bottomInnerPadding = bottomInnerPadding,
                                         onOpenReorderDevices = { showReorderDevices = true },
@@ -598,7 +622,8 @@ fun MainScreen() {
                                             devicePreviewGestureLock = locked
                                         },
                                         onOpenFullscreenCompat = {
-                                            rootNavigator.push(RootScreen.FullscreenControl)
+                                            if (isCover) coverControlRequested = true
+                                            else rootNavigator.push(RootScreen.FullscreenControl)
                                         },
                                     )
 
@@ -629,7 +654,7 @@ fun MainScreen() {
                     // 悬浮底栏依赖 InteractiveHighlight, 其内部构造 android.graphics.RuntimeShader (API 33+),
                     // 低版本组合即崩, 故在此拦截, 不依赖设置页的清理
                     if (
-                        asBundle.floatingBottomBar &&
+                        asBundle.floatingBottomBar && !isCover &&
                             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                     ) {
                         FloatingBottomBar(
@@ -704,7 +729,9 @@ fun MainScreen() {
         }
 
         entry<RootScreen.FullscreenControl>(swipeDismiss = swipeBackDirection) {
-            FullscreenControlRoute(
+            if (isCover) {
+                LaunchedEffect(Unit) { coverControlRequested = true; rootNavigator.pop() }
+            } else FullscreenControlRoute(
                 scrcpy = scrcpy,
                 onBack = rootNavigator.pop,
                 isInPip = false,
@@ -733,6 +760,13 @@ fun MainScreen() {
 
     MiuixTheme(
         controller = themeController,
+        textStyles = if (isCover) MiuixTheme.textStyles.copy(
+            main = MiuixTheme.textStyles.main.copy(fontSize = 13.sp),
+            headline1 = MiuixTheme.textStyles.headline1.copy(fontSize = 14.sp),
+            body1 = MiuixTheme.textStyles.body1.copy(fontSize = 12.sp),
+            body2 = MiuixTheme.textStyles.body2.copy(fontSize = 11.sp),
+            button = MiuixTheme.textStyles.button.copy(fontSize = 13.sp),
+        ) else MiuixTheme.textStyles,
     ) {
         ApplySystemBarsAppearance(activity?.window)
         CompositionLocalProvider(
@@ -744,13 +778,33 @@ fun MainScreen() {
             LocalServerPicker provides serverPicker,
             LocalTerminalFontPicker provides terminalFontPicker,
         ) {
-            NavDisplay(
-                backStack = rootBackStack,
-                onBack = rootNavigator.pop,
-                transition = navTransition,
-                effects = navEffects,
-                content = navRootContent,
-            )
+            val softwareContent by rememberUpdatedState<@Composable () -> Unit> {
+                NavDisplay(
+                    backStack = rootBackStack,
+                    onBack = rootNavigator.pop,
+                    transition = navTransition,
+                    effects = navEffects,
+                    content = navRootContent,
+                )
+            }
+            // Move the same page tree between hosts; recreating it during subcomposition
+            // briefly registers identical SaveableStateProvider keys twice.
+            val software = remember { movableContentOf { softwareContent() } }
+            if (coverControlActive) CoverControlScreen(
+                scrcpy = scrcpy,
+                session = currentSession,
+                pageNames = tabs.map { stringResource(it.labelResId) },
+                onSelectPage = { index ->
+                    while (rootBackStack.size > 1) rootNavigator.pop()
+                    navigateToTab(tabs[index])
+                },
+                onLeave = {
+                    coverControlRequested = false
+                    while (rootBackStack.size > 1) rootNavigator.pop()
+                    navigateToTab(MainBottomTabDestination.Devices)
+                },
+                software = software,
+            ) else software()
         }
     }
 }

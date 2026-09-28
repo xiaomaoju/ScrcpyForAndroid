@@ -2,7 +2,10 @@ package io.github.miuzarte.scrcpyforandroid.miuix
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay
+import io.github.miuzarte.scrcpyforandroid.pages.LocalCoverPanel
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -59,6 +62,7 @@ fun OverlaySpinnerPreference(
 
     val itemsNotEmpty = items.isNotEmpty()
     val actualEnabled = enabled && itemsNotEmpty
+    val inCoverPanel = LocalCoverPanel.current
 
     val actionColor = if (actualEnabled) {
         MiuixTheme.colorScheme.onSurfaceVariantActions
@@ -81,14 +85,14 @@ fun OverlaySpinnerPreference(
     BasicComponent(
         modifier = modifier,
         interactionSource = interactionSource,
-        insideMargin = insideMargin,
+        insideMargin = if (LocalCoverDisplay.current) PaddingValues(horizontal = 8.dp, vertical = 6.dp) else insideMargin,
         title = title,
         titleColor = titleColor,
         summary = summary,
         summaryColor = summaryColor,
         startAction = startAction,
         endActions = {
-            if (showValue && itemsNotEmpty) {
+            if (!inCoverPanel && showValue && itemsNotEmpty) {
                 Text(
                     text = items[selectedIndex].title ?: "",
                     modifier = Modifier
@@ -116,7 +120,12 @@ fun OverlaySpinnerPreference(
                 )
             }
         },
-        bottomAction = bottomAction,
+        bottomAction = if (inCoverPanel) ({
+            Column {
+                if (showValue && itemsNotEmpty) Text(items.getOrNull(selectedIndex)?.title.orEmpty(), color = actionColor, style = MiuixTheme.textStyles.body2)
+                bottomAction?.invoke()
+            }
+        }) else bottomAction,
         onClick = handleClick,
         holdDownState = isHoldDown.value,
         enabled = actualEnabled,
@@ -145,6 +154,20 @@ private fun OverlaySpinnerPopup(
             onSelectState.value?.invoke(selectedIdx)
             currentOnDismiss()
         }
+    }
+    if (LocalCoverDisplay.current) {
+        CoverMenuSheet(
+            show = isDropdownExpanded,
+            entries = listOf(DropdownEntry(items.mapIndexed { index, item ->
+                DropdownItem(text = item.title.orEmpty(), summary = item.summary, icon = item.icon,
+                    enabled = item.enabled, selected = index == selectedIndex,
+                    onClick = { onItemSelected(index) })
+            })),
+            onDismiss = onDismiss,
+            onDismissFinished = onDismissFinished,
+            renderInRootScaffold = renderInRootScaffold,
+        )
+        return
     }
     OverlayListPopup(
         show = isDropdownExpanded,

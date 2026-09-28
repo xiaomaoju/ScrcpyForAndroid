@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -36,6 +39,7 @@
         -->
         <activity
             android:name=".MainActivity"
+            android:launchMode="singleTask"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|locale|layoutDirection"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
@@ -54,6 +58,27 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/usb_device_filter" />
         </activity>
+
+        <!-- Compatibility entry used by cover launchers and user-defined routine shortcuts. -->
+        <activity-alias android:name=".AutoCastActivity" android:targetActivity=".MainActivity" android:exported="true" />
+
+        <service android:name=".autocast.AutoCastTileService" android:label="@string/autocast_tile_name"
+            android:icon="@drawable/ic_autocast_tile" android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+            <meta-data android:name="android.service.quicksettings.ACTIVE_TILE" android:value="true" />
+        </service>
+
+        <receiver android:name=".autocast.AutoCastWidgetProvider" android:label="@string/autocast_name" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/autocast_widget_info" />
+            <meta-data android:name="com.samsung.android.appwidget.provider" android:resource="@xml/autocast_samsung_widget_info" />
+        </receiver>
+
+        <service android:name=".autocast.AutoCastService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-initiated local ADB mirroring and temporary fold-state restoration on Galaxy Z Flip5" />
+        </service>
 
         <activity
             android:name=".StreamActivity"

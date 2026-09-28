@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Rect
 import android.hardware.display.DisplayManager
+import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay
+import io.github.miuzarte.scrcpyforandroid.scrcpy.fitVideoContent
+import androidx.compose.ui.platform.LocalDensity
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Surface
@@ -114,7 +117,10 @@ fun FullscreenControlScreen(
     }
     val fullscreenDebugInfo = asBundle.fullscreenDebugInfo
     val showFullscreenVirtualButtons = asBundle.showFullscreenVirtualButtons
-    val fullscreenVirtualButtonHeight = asBundle.fullscreenVirtualButtonHeightDp.dp
+    val isCover = LocalCoverDisplay.current
+    val fullscreenVirtualButtonHeight = if (isCover)
+        asBundle.fullscreenVirtualButtonHeightDp.dp.coerceIn(40.dp, 56.dp)
+    else asBundle.fullscreenVirtualButtonHeightDp.dp
     val fullscreenVirtualButtonDockSetting = remember(asBundle.fullscreenVirtualButtonDock) {
         AppSettings.FullscreenVirtualButtonDock.fromStoredValue(
             asBundle.fullscreenVirtualButtonDock,
@@ -245,7 +251,7 @@ fun FullscreenControlScreen(
         }
     }
 
-    LaunchedEffect(currentSession?.width, currentSession?.height) {
+    LaunchedEffect(currentSession?.width, currentSession?.height, isCover) {
         val session = currentSession ?: return@LaunchedEffect
         onVideoSizeChanged(session.width, session.height)
     }
@@ -425,6 +431,14 @@ fun FullscreenControlScreen(
         ) {
             val session = currentSession ?: return@Box
             FullscreenControlPage(
+                modifier = if (isCover && showFullscreenVirtualButtons && !isInPip) {
+                    Modifier.padding(
+                        start = if (fullscreenVirtualButtonDock == VirtualButtonBar.FullscreenDock.LEFT) fullscreenVirtualButtonHeight else 0.dp,
+                        top = if (fullscreenVirtualButtonDock == VirtualButtonBar.FullscreenDock.TOP) fullscreenVirtualButtonHeight else 0.dp,
+                        end = if (fullscreenVirtualButtonDock == VirtualButtonBar.FullscreenDock.RIGHT) fullscreenVirtualButtonHeight else 0.dp,
+                        bottom = if (fullscreenVirtualButtonDock == VirtualButtonBar.FullscreenDock.BOTTOM) fullscreenVirtualButtonHeight else 0.dp,
+                    )
+                } else Modifier,
                 scrcpy = scrcpy,
                 session = session,
                 onDismiss = onBack,
@@ -643,6 +657,7 @@ fun FullscreenControlPage(
     onDismiss: () -> Unit,
     showDebugInfo: Boolean,
     currentFps: Float,
+    modifier: Modifier = Modifier,
     gamepadDeviceName: String = GamepadHid.NAME,
     imeRequestToken: Int = 0,
     enableBackHandler: Boolean = true,
@@ -733,7 +748,7 @@ fun FullscreenControlPage(
     }
 
     BoxWithConstraints(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
             .then(
@@ -755,23 +770,13 @@ fun FullscreenControlPage(
                 }
             },
     ) {
-        val sessionAspect =
-            if (session.height == 0) 16f / 9f
-            else session.width.toFloat() / session.height.toFloat()
+        val density = LocalDensity.current
+        val videoBounds = fitVideoContent(session.width, session.height, constraints.maxWidth, constraints.maxHeight)
 
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .then(
-                    if (sessionAspect > (maxWidth.value / maxHeight.value))
-                        Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(sessionAspect)
-                    else
-                        Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(sessionAspect),
-                ),
+                .size(with(density) { videoBounds.width.toDp() }, with(density) { videoBounds.height.toDp() }),
         ) {
             ScrcpyVideoSurface(
                 modifier = Modifier

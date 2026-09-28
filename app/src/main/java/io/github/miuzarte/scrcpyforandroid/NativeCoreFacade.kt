@@ -37,6 +37,8 @@ object NativeCoreFacade {
     private val lifecycleScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val renderer = PersistentVideoRenderer()
     private val controller = VideoDecoderController(renderer)
+    internal val renderedVideoFrames: Long get() = renderer.renderedFrames
+    internal val decodedVideoFrames: Long get() = renderer.decodedFrames
 
     @Volatile
     private var activeSurfaceId: Int? = null

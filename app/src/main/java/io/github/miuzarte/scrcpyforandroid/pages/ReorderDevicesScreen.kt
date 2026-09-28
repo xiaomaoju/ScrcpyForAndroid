@@ -1,5 +1,6 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
+import io.github.miuzarte.scrcpyforandroid.scaffolds.CoverScrollableContent
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.*
@@ -64,20 +65,22 @@ fun ReorderDevicesScreen(
         defaultWindowInsetsPadding = false,
         onDismissRequest = onDismissRequest,
     ) {
-        ReorderableList(
-            itemsProvider = {
-                savedShortcuts.map { device ->
-                    ReorderableList.Item(
-                        id = device.id,
-                        title = device.name.ifBlank { device.host },
-                        subtitle = "${device.host}:${device.port}",
-                    )
-                }
-            },
-            onSettle = { fromIndex, toIndex ->
-                savedShortcuts = savedShortcuts.move(fromIndex, toIndex)
-            },
-        ).invoke()
-        Spacer(Modifier.height(UiSpacing.SheetBottom))
+        CoverScrollableContent {
+            ReorderableList(
+                itemsProvider = {
+                    savedShortcuts.map { device ->
+                        ReorderableList.Item(
+                            id = device.id,
+                            title = device.name.ifBlank { device.host },
+                            subtitle = "${device.host}:${device.port}",
+                        )
+                    }
+                },
+                onSettle = { fromIndex, toIndex ->
+                    savedShortcuts = savedShortcuts.move(fromIndex, toIndex)
+                },
+            ).invoke()
+            Spacer(Modifier.height(UiSpacing.SheetBottom))
+        }
     }
 }

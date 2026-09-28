@@ -45,6 +45,8 @@ class PersistentVideoRenderer {
     private val frameAvailableCount = AtomicLong(0)
     private val frameConsumedCount = AtomicLong(0)
     private val frameRenderedCount = AtomicLong(0)
+    internal val renderedFrames: Long get() = frameRenderedCount.get()
+    internal val decodedFrames: Long get() = frameAvailableCount.get()
 
     private var program = 0
     private var positionHandle = 0

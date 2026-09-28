@@ -1,15 +1,22 @@
 package io.github.miuzarte.scrcpyforandroid
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import io.github.miuzarte.scrcpyforandroid.ui.CoverDisplayContent
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import io.github.miuzarte.scrcpyforandroid.autocast.AutoCastIntents
+import io.github.miuzarte.scrcpyforandroid.autocast.AutoCastScreen
 import androidx.core.content.ContextCompat
 import io.github.miuzarte.scrcpyforandroid.i18n.LocalizedActivity
 import io.github.miuzarte.scrcpyforandroid.pages.MainScreen
@@ -22,6 +29,10 @@ import kotlinx.coroutines.runBlocking
 
 // 生物认证需要 FragmentActivity
 class MainActivity: LocalizedActivity() {
+    private var autoCastRequested by mutableStateOf(false)
+    private var autoCastRequestId by mutableStateOf(0)
+    private var autoCastStartApp by mutableStateOf<String?>(null)
+    private var externalInnerRequest by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +40,9 @@ class MainActivity: LocalizedActivity() {
 
         // no logEvent before context init
         AppRuntime.init(applicationContext)
+        autoCastRequested = savedInstanceState?.getBoolean("autoCast") ?: AutoCastIntents.isAutoCast(intent)
+        autoCastStartApp = savedInstanceState?.getString("autoCastStartApp") ?: intent.getStringExtra(AutoCastIntents.EXTRA_START_APP)
+        externalInnerRequest = savedInstanceState?.getBoolean("externalInnerRequest") ?: AutoCastIntents.isExternalInnerRequest(intent)
         AppScreenOn.register(window)
 
         runBlocking {
@@ -47,8 +61,34 @@ class MainActivity: LocalizedActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MainScreen()
+            CoverDisplayContent {
+                if (autoCastRequested) AutoCastScreen(requestId = autoCastRequestId, startApp = autoCastStartApp, externalInnerRequest = externalInnerRequest, onClose = {
+                    autoCastRequested = false
+                }, onOpenApp = { autoCastRequested = false })
+                else MainScreen()
+            }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (AutoCastIntents.isAutoCast(intent)) {
+            if (!autoCastRequested || intent.hasExtra(AutoCastIntents.EXTRA_START_APP)) {
+                autoCastStartApp = intent.getStringExtra(AutoCastIntents.EXTRA_START_APP)
+                externalInnerRequest = AutoCastIntents.isExternalInnerRequest(intent)
+            }
+            if (AutoCastIntents.isExternalInnerRequest(intent)) externalInnerRequest = true
+            autoCastRequested = true
+            autoCastRequestId++
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("autoCast", autoCastRequested)
+        outState.putString("autoCastStartApp", autoCastStartApp)
+        outState.putBoolean("externalInnerRequest", externalInnerRequest)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onResume() {
@@ -59,6 +99,7 @@ class MainActivity: LocalizedActivity() {
 
     override fun onDestroy() {
         AppScreenOn.unregister(window)
+        if (isFinishing && autoCastRequested) AppRuntime.autoCast?.onWindowRemoved()
         // Activity 重建 (配置变更) 不能收尾会话, 只有真正退出才释放
         if (isFinishing) AppRuntime.releaseSession()
         super.onDestroy()

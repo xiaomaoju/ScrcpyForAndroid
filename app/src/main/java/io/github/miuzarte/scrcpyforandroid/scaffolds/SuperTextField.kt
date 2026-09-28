@@ -62,7 +62,7 @@ fun SuperTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     onFocusGained: (() -> Unit)? = null,
     onFocusLost: (() -> Unit)? = null,
-    insideMargin: DpSize = DpSize(16.dp, 16.dp),
+    insideMargin: DpSize = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) DpSize(8.dp, 8.dp) else DpSize(16.dp, 16.dp),
     // backgroundColor: Color = colorScheme.secondaryContainer,
     // labelColor: Color = colorScheme.onSecondaryContainer,
     // borderColor: Color = colorScheme.primary,

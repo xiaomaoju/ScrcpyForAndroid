@@ -33,7 +33,9 @@ internal class ConnectionController(
         clearQuickOnlineForTarget: ConnectionTarget? = state.adbSession.currentTarget,
         cause: DisconnectCause = DisconnectCause.Unknown,
         statusLine: String = "Disconnected",
+        stopAutoCast: Boolean = true,
     ): ConnectionDisconnectResult {
+        if (stopAutoCast) stopManagedCast()
         stateStore.markDisconnected(cause = cause, statusLine = statusLine)
         AppRuntime.currentConnectionTarget = null
         AppRuntime.currentConnectedDevice = null
@@ -194,6 +196,8 @@ internal class ConnectionController(
     }
 
     suspend fun stopScrcpySession(killAdbOnClose: Boolean): StopScrcpyResult {
+        val managedTarget = state.adbSession.currentTarget
+        if (stopManagedCast()) return StopScrcpyResult(disconnectedAdb = true, clearedTarget = managedTarget)
         scrcpy.stop()
         if (killAdbOnClose) {
             val disconnected = disconnectAdbConnection(
@@ -215,5 +219,11 @@ internal class ConnectionController(
             disconnectedAdb = false,
             clearedTarget = null,
         )
+    }
+
+    private suspend fun stopManagedCast(): Boolean {
+        val controller = AppRuntime.autoCast?.takeIf { it.scrcpy === scrcpy && it.active } ?: return false
+        controller.stopAndAwait()
+        return true
     }
 }

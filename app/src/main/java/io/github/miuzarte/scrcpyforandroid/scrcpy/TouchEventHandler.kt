@@ -9,7 +9,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 /**
  * TouchEventHandler
@@ -63,7 +62,7 @@ class TouchEventHandler(
     private val pendingMoveJobs = HashMap<Int, Job>(10)
 
     fun handleMotionEvent(event: MotionEvent): Boolean {
-        if (touchAreaSize.width == 0 || touchAreaSize.height == 0) {
+        if (touchAreaSize.width == 0 || touchAreaSize.height == 0 || session.width <= 0 || session.height <= 0) {
             return true
         }
 
@@ -98,52 +97,16 @@ class TouchEventHandler(
                 event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE
     }
 
-    private data class ContentBounds(
-        val width: Float,
-        val height: Float,
-        val left: Float,
-        val top: Float,
-    )
+    private fun calculateContentBounds(): VideoContentBounds =
+        fitVideoContent(session.width, session.height, touchAreaSize.width, touchAreaSize.height)
 
-    private fun calculateContentBounds(): ContentBounds {
-        val sessionAspect = if (session.height == 0) {
-            16f / 9f
-        } else {
-            session.width.toFloat() / session.height.toFloat()
-        }
-        val containerWidth = touchAreaSize.width.toFloat()
-        val containerHeight = touchAreaSize.height.toFloat()
-        val containerAspect = containerWidth / containerHeight
-
-        val contentWidth: Float
-        val contentHeight: Float
-        if (sessionAspect > containerAspect) {
-            contentWidth = containerWidth
-            contentHeight = containerWidth / sessionAspect
-        } else {
-            contentHeight = containerHeight
-            contentWidth = containerHeight * sessionAspect
-        }
-        val contentLeft = (containerWidth - contentWidth) / 2f
-        val contentTop = (containerHeight - contentHeight) / 2f
-
-        return ContentBounds(contentWidth, contentHeight, contentLeft, contentTop)
-    }
-
-    private fun isInsideContent(rawX: Float, rawY: Float, bounds: ContentBounds): Boolean {
+    private fun isInsideContent(rawX: Float, rawY: Float, bounds: VideoContentBounds): Boolean {
         return rawX in bounds.left..(bounds.left + bounds.width) &&
                 rawY in bounds.top..(bounds.top + bounds.height)
     }
 
-    private fun mapToDevice(rawX: Float, rawY: Float, bounds: ContentBounds): Pair<Int, Int> {
-        val normalizedX = ((rawX - bounds.left) / bounds.width).coerceIn(0f, 1f)
-        val normalizedY = ((rawY - bounds.top) / bounds.height).coerceIn(0f, 1f)
-        val x = (normalizedX * (session.width - 1).coerceAtLeast(0)).roundToInt()
-            .coerceIn(0, (session.width - 1).coerceAtLeast(0))
-        val y = (normalizedY * (session.height - 1).coerceAtLeast(0)).roundToInt()
-            .coerceIn(0, (session.height - 1).coerceAtLeast(0))
-        return x to y
-    }
+    private fun mapToDevice(rawX: Float, rawY: Float, bounds: VideoContentBounds): Pair<Int, Int> =
+        bounds.toVideoPosition(rawX, rawY, session.width, session.height)
 
     private fun getPointerLabel(pointerId: Int): Int {
         val existing = pointerLabels[pointerId]
@@ -178,7 +141,7 @@ class TouchEventHandler(
 
     private fun handleMouseEvent(
         event: MotionEvent,
-        bounds: ContentBounds,
+        bounds: VideoContentBounds,
     ): Boolean {
         val rawX = event.getX(0)
         val rawY = event.getY(0)
@@ -264,7 +227,7 @@ class TouchEventHandler(
         return true
     }
 
-    private fun releasePointer(pointerId: Int, bounds: ContentBounds) {
+    private fun releasePointer(pointerId: Int, bounds: VideoContentBounds) {
         if (!activePointerIds.contains(pointerId)) return
         pendingMoveJobs.remove(pointerId)?.cancel()
         val pos = activePointerPositions[pointerId] ?: Offset.Zero
@@ -282,7 +245,7 @@ class TouchEventHandler(
         pointerLabels.remove(pointerId)
     }
 
-    private fun handleCancelAction(bounds: ContentBounds): Boolean {
+    private fun handleCancelAction(bounds: VideoContentBounds): Boolean {
         val toCancel = activePointerIds.toList()
         for (pointerId in toCancel) {
             releasePointer(pointerId, bounds)
@@ -304,7 +267,7 @@ class TouchEventHandler(
         }
     }
 
-    private fun handleDisappearedPointers(eventPointerIds: Set<Int>, bounds: ContentBounds) {
+    private fun handleDisappearedPointers(eventPointerIds: Set<Int>, bounds: VideoContentBounds) {
         val disappearedPointers = activePointerIds.filter { it !in eventPointerIds }
         for (pointerId in disappearedPointers) {
             releasePointer(pointerId, bounds)
@@ -321,7 +284,7 @@ class TouchEventHandler(
     private fun handlePointerDown(
         event: MotionEvent,
         endedPointerId: Int?,
-        bounds: ContentBounds,
+        bounds: VideoContentBounds,
     ) {
         justPressedPointerIds.clear()
         for (i in 0 until event.pointerCount) {
@@ -362,7 +325,7 @@ class TouchEventHandler(
     private fun handlePointerMove(
         event: MotionEvent,
         endedPointerId: Int?,
-        bounds: ContentBounds,
+        bounds: VideoContentBounds,
     ) {
         for (i in 0 until event.pointerCount) {
             val pointerId = event.getPointerId(i)
@@ -392,7 +355,7 @@ class TouchEventHandler(
 
     private fun handlePointerUp(
         endedPointerId: Int?,
-        bounds: ContentBounds,
+        bounds: VideoContentBounds,
     ) {
         if (endedPointerId != null) {
             val endPos = eventPositions[endedPointerId]

@@ -1,5 +1,9 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
+import io.github.miuzarte.scrcpyforandroid.ui.coverPreferenceMargin
+
+import io.github.miuzarte.scrcpyforandroid.scaffolds.CoverScrollableContent
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveTopAppBar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
@@ -50,10 +54,10 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.icon.extended.Store
-import top.yukonga.miuix.kmp.menu.OverlayIconDropdownMenu
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayIconDropdownMenu
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveDialog as OverlayDialog
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import kotlin.math.roundToInt
@@ -164,7 +168,7 @@ internal fun ScrcpyAllOptionsScreen(
     Scaffold(
         topBar = {
             BlurredBar(backdrop = blurBackdrop, allowProgressive = false) {
-                TopAppBar(
+                AdaptiveTopAppBar(
                     title = stringResource(R.string.scrcpyopt_title),
                     color =
                         if (blurActive) Color.Transparent
@@ -849,6 +853,7 @@ internal fun ScrcpyAllOptionsPage(
         item {
             Card {
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_turn_screen_off),
                     summary = "--turn-screen-off",
                     checked = soBundle.turnScreenOff,
@@ -865,6 +870,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_control),
                     summary = "--no-control",
                     checked = !soBundle.control,
@@ -875,6 +881,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_video),
                     summary = "--no-video",
                     checked = !soBundle.video,
@@ -885,6 +892,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_video_playback),
                     summary = "--no-video-playback",
                     checked = !soBundle.videoPlayback,
@@ -896,6 +904,7 @@ internal fun ScrcpyAllOptionsPage(
                     enabled = soBundle.video,
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_audio),
                     summary = "--no-audio",
                     checked = !soBundle.audio,
@@ -906,6 +915,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_audio_playback),
                     summary = "--no-audio-playback",
                     checked = !soBundle.audioPlayback,
@@ -955,6 +965,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_power_on),
                     summary = "--no-power-on",
                     checked = !soBundle.powerOn,
@@ -965,6 +976,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_power_off_on_close),
                     summary = "--power-off-on-close",
                     checked = soBundle.powerOffOnClose,
@@ -975,6 +987,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_stay_awake),
                     summary = "--stay-awake",
                     checked = soBundle.stayAwake,
@@ -985,6 +998,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_keep_active),
                     summary = "--keep-active",
                     checked = soBundle.keepActive,
@@ -995,6 +1009,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_show_touches),
                     summary = "--show-touches",
                     checked = soBundle.showTouches,
@@ -1005,6 +1020,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_fullscreen),
                     summary = "--fullscreen",
                     checked = soBundle.fullscreen,
@@ -1015,6 +1031,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_disable_screensaver),
                     summary = "--disable-screensaver",
                     checked = soBundle.disableScreensaver,
@@ -1037,6 +1054,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_kill_adb_on_close),
                     summary = "--kill-adb-on-close",
                     checked = soBundle.killAdbOnClose,
@@ -1487,6 +1505,7 @@ internal fun ScrcpyAllOptionsPage(
                             },
                         )
                         SwitchPreference(
+                            insideMargin = coverPreferenceMargin(),
                             title = stringResource(R.string.scrcpyopt_camera_high_speed),
                             summary = "--camera-high-speed",
                             checked = soBundle.cameraHighSpeed,
@@ -1497,6 +1516,7 @@ internal fun ScrcpyAllOptionsPage(
                             },
                         )
                         SwitchPreference(
+                            insideMargin = coverPreferenceMargin(),
                             title = stringResource(R.string.scrcpyopt_camera_torch),
                             summary = "--camera-torch",
                             checked = soBundle.cameraTorch,
@@ -1526,6 +1546,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_audio_dup),
                     summary = "--audio-dup",
                     checked = soBundle.audioDup,
@@ -1536,6 +1557,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_require_audio),
                     summary = "--require-audio",
                     checked = soBundle.requireAudio,
@@ -1665,6 +1687,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_vd_destroy_content),
                     summary = "--no-vd-destroy-content",
                     checked = !soBundle.vdDestroyContent,
@@ -1675,6 +1698,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_vd_decorations),
                     summary = "--no-vd-system-decorations",
                     checked = !soBundle.vdSystemDecorations,
@@ -1685,6 +1709,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_downsize_on_error),
                     summary = "--no-downsize-on-error",
                     checked = !soBundle.downsizeOnError,
@@ -1698,6 +1723,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_legacy_paste),
                     summary = "--legacy-paste",
                     checked = soBundle.legacyPaste,
@@ -1727,6 +1753,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_key_repeat),
                     summary = "--no-key-repeat",
                     checked = !soBundle.forwardKeyRepeat,
@@ -1738,6 +1765,7 @@ internal fun ScrcpyAllOptionsPage(
                     enabled = soBundle.keyInjectMode != ClientOptions.KeyInjectMode.PREFER_TEXT.string,
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_clipboard_autosync),
                     summary = "--no-clipboard-autosync",
                     checked = !soBundle.clipboardAutosync,
@@ -1748,6 +1776,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_mouse_hover),
                     summary = "--no-mouse-hover",
                     checked = !soBundle.mouseHover,
@@ -1758,6 +1787,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_gamepad),
                     summary = "--gamepad=uhid",
                     checked = soBundle.gamepad,
@@ -1768,6 +1798,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_no_cleanup),
                     summary = "--no-cleanup",
                     checked = !soBundle.cleanup,
@@ -1781,6 +1812,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_flex_display),
                     summary = "--flex-display",
                     checked = soBundle.flexDisplay,
@@ -1794,6 +1826,7 @@ internal fun ScrcpyAllOptionsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.scrcpyopt_ignore_video_encoder_constraints),
                     summary = "--ignore-video-encoder-constraints",
                     checked = soBundle.ignoreVideoEncoderConstraints,
@@ -2313,44 +2346,46 @@ private fun ManageProfilesSheet(
         val textCurrent = stringResource(R.string.scrcpyopt_current_profile)
         val textRename = stringResource(R.string.scrcpyopt_rename_profile)
         val textDelete = stringResource(R.string.scrcpyopt_delete_profile)
-        ReorderableList(
-            itemsProvider = {
-                profiles.map { profile ->
-                    ReorderableList.Item(
-                        id = profile.id,
-                        title = profile.name,
-                        subtitle =
-                            if (profile.id == selectedProfileId) textCurrent
-                            else "",
-                        onClick =
-                            if (profile.id != ScrcpyOptions.GLOBAL_PROFILE_ID) {
-                                { onRenameProfile(profile.id) }
-                            } else null,
-                        dragEnabled = profile.id != ScrcpyOptions.GLOBAL_PROFILE_ID,
-                        endActions = buildList {
-                            if (profile.id != ScrcpyOptions.GLOBAL_PROFILE_ID) {
-                                add(
-                                    ReorderableList.EndAction.Icon(
-                                        icon = Icons.Rounded.Edit,
-                                        contentDescription = textRename,
-                                        onClick = { onRenameProfile(profile.id) },
-                                    ),
-                                )
-                                add(
-                                    ReorderableList.EndAction.Icon(
-                                        icon = Icons.Rounded.DeleteOutline,
-                                        contentDescription = textDelete,
-                                        onClick = { onDeleteProfile(profile.id) },
-                                    ),
-                                )
-                            }
-                        },
-                    )
-                }
-            },
-            onSettle = onMoveProfile,
-        ).invoke()
-        Spacer(Modifier.height(UiSpacing.SheetBottom))
+        CoverScrollableContent {
+            ReorderableList(
+                itemsProvider = {
+                    profiles.map { profile ->
+                        ReorderableList.Item(
+                            id = profile.id,
+                            title = profile.name,
+                            subtitle =
+                                if (profile.id == selectedProfileId) textCurrent
+                                else "",
+                            onClick =
+                                if (profile.id != ScrcpyOptions.GLOBAL_PROFILE_ID) {
+                                    { onRenameProfile(profile.id) }
+                                } else null,
+                            dragEnabled = profile.id != ScrcpyOptions.GLOBAL_PROFILE_ID,
+                            endActions = buildList {
+                                if (profile.id != ScrcpyOptions.GLOBAL_PROFILE_ID) {
+                                    add(
+                                        ReorderableList.EndAction.Icon(
+                                            icon = Icons.Rounded.Edit,
+                                            contentDescription = textRename,
+                                            onClick = { onRenameProfile(profile.id) },
+                                        ),
+                                    )
+                                    add(
+                                        ReorderableList.EndAction.Icon(
+                                            icon = Icons.Rounded.DeleteOutline,
+                                            contentDescription = textDelete,
+                                            onClick = { onDeleteProfile(profile.id) },
+                                        ),
+                                    )
+                                }
+                            },
+                        )
+                    }
+                },
+                onSettle = onMoveProfile,
+            ).invoke()
+            Spacer(Modifier.height(UiSpacing.SheetBottom))
+        }
     }
 }
 

@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.miuzarte.scrcpyforandroid.constants.UiSpacing
 import io.github.miuzarte.scrcpyforandroid.ui.contextClick
+import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay
+import io.github.miuzarte.scrcpyforandroid.pages.LocalCoverPanel
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults.defaultColors
 import top.yukonga.miuix.kmp.basic.Icon
@@ -51,6 +53,24 @@ internal fun StatusCardLayout(
     busyLabel: String?,
 ) {
     val haptic = LocalHapticFeedback.current
+
+    if (LocalCoverDisplay.current) {
+        Card(insideMargin = PaddingValues(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(spec.big.icon, null, Modifier.size(18.dp), tint = spec.big.iconTint)
+                Text(spec.big.title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            }
+            if (spec.big.subtitle.isNotBlank()) Text(spec.big.subtitle, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            busyLabel?.let { Text(it, fontSize = 11.sp, color = colorScheme.primary) }
+            listOf(spec.firstSmall, spec.secondSmall).forEach { metric ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(metric.title, fontSize = 10.sp, color = colorScheme.onSurfaceVariantSummary, modifier = Modifier.weight(1f))
+                    Text(metric.value, fontSize = 11.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1.4f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+        return
+    }
 
     Row(
         modifier = Modifier

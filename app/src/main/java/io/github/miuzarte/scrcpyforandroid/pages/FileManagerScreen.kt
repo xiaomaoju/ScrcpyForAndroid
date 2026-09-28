@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -39,9 +40,9 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.icon.extended.Tune
-import top.yukonga.miuix.kmp.menu.OverlayIconDropdownMenu
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayIconDropdownMenu
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveDialog as OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 
 private const val INITIAL_REMOTE_PATH = "/storage/emulated/0"
@@ -135,7 +136,7 @@ fun FileManagerScreen(
     Scaffold(
         topBar = {
             BlurredBar(backdrop = blurBackdrop, allowProgressive = false) {
-                SmallTopAppBar(
+                io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveSmallTopAppBar(
                     title = stringResource(R.string.main_tab_files),
                     color =
                         if (blurActive) Color.Transparent
@@ -164,6 +165,7 @@ fun FileManagerScreen(
                             }
                         }
                         BreadcrumbBar(
+                            insideMargin = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) PaddingValues(horizontal = 6.dp, vertical = 2.dp) else BreadcrumbBarDefaults.InsideMargin,
                             items = breadcrumbItems,
                             onItemClick = { index ->
                                 haptic.contextClick()
@@ -232,6 +234,7 @@ fun FileManagerScreen(
                         }
 
                         OverlayIconDropdownMenu(
+                            modifier = Modifier.testTag("file-actions"),
                             entry = DropdownEntry(
                                 items = listOf(
                                     DropdownItem(
@@ -432,7 +435,7 @@ private fun FileManagerPage(
                                     onLongClick = { onShowEntryDetails(entry) },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(72.dp),
+                                        .height(if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) 48.dp else 72.dp),
                                 )
                             }
                             repeat(columns - rowEntries.size) { Box(Modifier.weight(1f)) }
@@ -484,7 +487,7 @@ private fun FileManagerItemCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) 8.dp else 16.dp, vertical = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) 4.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -507,7 +510,7 @@ private fun FileManagerItemCard(
                     )
                     Text(
                         text = summary,
-                        fontSize = 13.sp,
+                        fontSize = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) 10.sp else 13.sp,
                         color = colorScheme.onSurfaceVariantSummary,
                         maxLines = 1,
                         softWrap = false,
@@ -597,6 +600,7 @@ private fun PathJumpDialog(
     onConfirm: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    val cover = io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current
     var textFieldValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(path))
     }
@@ -611,10 +615,17 @@ private fun PathJumpDialog(
         title = stringResource(R.string.fm_goto_path),
         defaultWindowInsetsPadding = false,
         onDismissRequest = onDismissRequest,
+        actions = {
+            Row(Modifier.fillMaxWidth().padding(top = if (cover) 6.dp else UiSpacing.ContentVertical), horizontalArrangement = Arrangement.spacedBy(if (cover) 6.dp else UiSpacing.ContentHorizontal)) {
+                TextButton(stringResource(R.string.button_cancel), onClick = { haptic.contextClick(); onDismissRequest() }, modifier = Modifier.weight(1f), insideMargin = if (cover) PaddingValues(6.dp) else ButtonDefaults.InsideMargin, minHeight = if (cover) 36.dp else ButtonDefaults.MinHeight)
+                TextButton(stringResource(R.string.button_confirm), onClick = { haptic.confirm(); onConfirm() }, modifier = Modifier.weight(1f), insideMargin = if (cover) PaddingValues(6.dp) else ButtonDefaults.InsideMargin, minHeight = if (cover) 36.dp else ButtonDefaults.MinHeight, colors = ButtonDefaults.textButtonColorsPrimary())
+            }
+        },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.ContentVertical)) {
             TextField(
                 value = textFieldValue,
+                insideMargin = if (cover) androidx.compose.ui.unit.DpSize(8.dp, 8.dp) else androidx.compose.ui.unit.DpSize(16.dp, 16.dp),
                 onValueChange = {
                     textFieldValue = it
                     onPathChange(it.text)
@@ -622,27 +633,6 @@ private fun PathJumpDialog(
                 // label = "/storage/emulated/0",
                 // useLabelAsPlaceholder = true,
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(UiSpacing.ContentHorizontal),
-            ) {
-                TextButton(
-                    text = stringResource(R.string.button_cancel),
-                    onClick = {
-                        haptic.contextClick()
-                        onDismissRequest()
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(
-                    text = stringResource(R.string.button_confirm),
-                    onClick = {
-                        haptic.confirm()
-                        onConfirm()
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-            }
         }
     }
 }
@@ -656,6 +646,7 @@ private fun CreateFolderDialog(
     onConfirm: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    val cover = io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current
     var textFieldValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(folderName))
     }
@@ -670,10 +661,17 @@ private fun CreateFolderDialog(
         title = stringResource(R.string.fm_title_create_folder),
         defaultWindowInsetsPadding = false,
         onDismissRequest = onDismissRequest,
+        actions = {
+            Row(Modifier.fillMaxWidth().padding(top = if (cover) 6.dp else UiSpacing.ContentVertical), horizontalArrangement = Arrangement.spacedBy(if (cover) 6.dp else UiSpacing.PageItem)) {
+                TextButton(stringResource(R.string.button_cancel), onClick = { haptic.contextClick(); onDismissRequest() }, modifier = Modifier.weight(1f), insideMargin = if (cover) PaddingValues(6.dp) else ButtonDefaults.InsideMargin, minHeight = if (cover) 36.dp else ButtonDefaults.MinHeight)
+                TextButton(stringResource(R.string.fm_button_create), onClick = { haptic.confirm(); onConfirm() }, modifier = Modifier.weight(1f), insideMargin = if (cover) PaddingValues(6.dp) else ButtonDefaults.InsideMargin, minHeight = if (cover) 36.dp else ButtonDefaults.MinHeight, colors = ButtonDefaults.textButtonColorsPrimary())
+            }
+        },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.ContentVertical)) {
             TextField(
                 value = textFieldValue,
+                insideMargin = if (cover) androidx.compose.ui.unit.DpSize(8.dp, 8.dp) else androidx.compose.ui.unit.DpSize(16.dp, 16.dp),
                 onValueChange = {
                     textFieldValue = it
                     onFolderNameChange(it.text)
@@ -681,28 +679,6 @@ private fun CreateFolderDialog(
                 label = stringResource(R.string.fm_label_new_folder),
                 useLabelAsPlaceholder = true,
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(UiSpacing.PageItem),
-            ) {
-                TextButton(
-                    text = stringResource(R.string.button_cancel),
-                    onClick = {
-                        haptic.contextClick()
-                        onDismissRequest()
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(
-                    text = stringResource(R.string.fm_button_create),
-                    onClick = {
-                        haptic.confirm()
-                        onConfirm()
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-            }
         }
     }
 }

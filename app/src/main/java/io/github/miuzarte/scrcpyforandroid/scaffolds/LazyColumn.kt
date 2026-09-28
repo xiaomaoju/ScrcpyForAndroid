@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,9 +27,9 @@ fun LazyColumn(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     scrollBehavior: ScrollBehavior? = null,
     state: LazyListState = rememberLazyListState(),
-    itemSpacing: Dp = UiSpacing.PageItem,
-    horizontalPadding: Dp = UiSpacing.PageHorizontal,
-    verticalPadding: Dp = UiSpacing.PageVertical,
+    itemSpacing: Dp = if (LocalCoverDisplay.current) 6.dp else UiSpacing.PageItem,
+    horizontalPadding: Dp = if (LocalCoverDisplay.current) 6.dp else UiSpacing.PageHorizontal,
+    verticalPadding: Dp = if (LocalCoverDisplay.current) 6.dp else UiSpacing.PageVertical,
     bottomInnerPadding: Dp? = null,
     clearFocusOnTap: Boolean = true,
     limitLandscapeWidth: Boolean = true,
@@ -70,7 +71,9 @@ fun LazyColumn(
                     .overScrollVertical()
                     .scrollEndHaptic()
                     .then(
-                        if (scrollBehavior != null)
+                        // Cover headers are fixed. An unattached collapsing header has an
+                        // unbounded offset and would consume every upward drag before the list.
+                        if (scrollBehavior != null && !LocalCoverDisplay.current)
                             Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
                         else Modifier,
                     ),

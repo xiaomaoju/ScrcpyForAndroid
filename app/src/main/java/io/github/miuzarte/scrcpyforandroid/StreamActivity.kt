@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
 import android.os.Bundle
+import io.github.miuzarte.scrcpyforandroid.ui.CoverDisplayContent
 import androidx.activity.compose.setContent
 import androidx.core.app.PictureInPictureParamsCompat.Builder
 import androidx.core.content.ContextCompat
@@ -52,7 +53,7 @@ class StreamActivity: LocalizedActivity() {
         basicPip.setEnabled(true)
 
         setContent {
-            StreamScreen(activity = this)
+            CoverDisplayContent { StreamScreen(activity = this) }
         }
 
         /*

@@ -18,7 +18,7 @@ import top.yukonga.miuix.kmp.basic.Slider
 import top.yukonga.miuix.kmp.basic.SliderDefaults.SliderHapticEffect
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveDialog as OverlayDialog
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.textStyles
@@ -57,6 +57,7 @@ fun ArrowSlider(
     var holdArrow by remember { mutableStateOf(false) }
 
     ArrowPreference(
+        insideMargin = io.github.miuzarte.scrcpyforandroid.ui.coverPreferenceMargin(),
         title = title,
         summary = summary,
         onClick = {

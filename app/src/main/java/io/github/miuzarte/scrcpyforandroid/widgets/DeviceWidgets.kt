@@ -1,5 +1,8 @@
 package io.github.miuzarte.scrcpyforandroid.widgets
 
+import io.github.miuzarte.scrcpyforandroid.ui.coverPreferenceMargin
+
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayDropdownPreference
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Surface
@@ -37,6 +40,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,7 +74,7 @@ import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.AddCircle
 import top.yukonga.miuix.kmp.icon.extended.Delete
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveDialog as OverlayDialog
 import top.yukonga.miuix.kmp.preference.*
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.isDynamicColor
@@ -184,6 +188,7 @@ internal fun StatusCard(
 
 @Composable
 internal fun PairingCard(
+    compact: Boolean = false,
     busy: Boolean,
     autoDiscoverOnDialogOpen: Boolean,
     onDiscoverTarget: (suspend () -> Pair<String, Int>?)? = null,
@@ -194,8 +199,14 @@ internal fun PairingCard(
     val showPairDialog = remember { mutableStateOf(false) }
     val holdDownState = remember { mutableStateOf(false) }
 
-    Card {
+    if (compact) TextButton(
+        text = stringResource(R.string.device_pairing_title),
+        onClick = { haptic.contextClick(); showPairDialog.value = true; holdDownState.value = true },
+        enabled = !busy, modifier = Modifier.fillMaxWidth(), minHeight = 32.dp,
+        insideMargin = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
+    ) else Card {
         ArrowPreference(
+            insideMargin = coverPreferenceMargin(),
             title = stringResource(R.string.device_pairing_title),
             onClick = {
                 haptic.contextClick()
@@ -468,6 +479,7 @@ internal fun ConfigPanel(
     showFullscreenAction: Boolean = false,
     onOpenFullscreen: () -> Unit = {},
     reverseSideActions: Boolean = false,
+    showSessionActions: Boolean = true,
 ) {
     val haptic = LocalHapticFeedback.current
     val taskScope = remember { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
@@ -523,6 +535,7 @@ internal fun ConfigPanel(
     Card {
         if (!hideSimpleConfigItems) {
             SwitchPreference(
+                insideMargin = coverPreferenceMargin(),
                 title = stringResource(R.string.device_config_audio_forwarding),
                 summary = stringResource(R.string.device_config_audio_forwarding_desc),
                 checked = soBundle.audio,
@@ -644,6 +657,8 @@ internal fun ConfigPanel(
         }
 
         ArrowPreference(
+
+            insideMargin = coverPreferenceMargin(),
             title = stringResource(
                 if (!hideSimpleConfigItems) R.string.device_config_more_params
                 else R.string.device_config_all_params,
@@ -664,6 +679,8 @@ internal fun ConfigPanel(
         )
 
         ArrowPreference(
+
+            insideMargin = coverPreferenceMargin(),
             title = stringResource(R.string.bottomsheet_all_apps),
             endActions = {
                 Text(
@@ -679,6 +696,7 @@ internal fun ConfigPanel(
             enabled = !busy && !adbConnecting,
         )
         ArrowPreference(
+            insideMargin = coverPreferenceMargin(),
             title = stringResource(R.string.bottomsheet_recent_tasks),
             endActions = {
                 Text(
@@ -694,10 +712,24 @@ internal fun ConfigPanel(
             enabled = !busy && !adbConnecting,
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(all = UiSpacing.ContentVertical),
+        if (!showSessionActions) {
+            // The cover device page keeps these actions in the pinned connection card.
+        } else if (io.github.miuzarte.scrcpyforandroid.pages.LocalCoverPanel.current) Row(
+            Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            if (isQuickConnected && onDisconnect != null) TextButton(
+                text = stringResource(R.string.button_disconnect), onClick = onDisconnect,
+                modifier = Modifier.weight(1f), enabled = !busy,
+                minHeight = 36.dp, insideMargin = PaddingValues(4.dp),
+            )
+            TextButton(
+                text = stringResource(if (sessionStarted) R.string.button_stop else R.string.button_start),
+                onClick = if (sessionStarted) onStop else onStart,
+                modifier = Modifier.weight(1f), enabled = !busy,
+                minHeight = 36.dp, insideMargin = PaddingValues(4.dp),
+            )
+        } else Row(
+            modifier = Modifier.fillMaxWidth().padding(all = UiSpacing.ContentVertical),
             horizontalArrangement = Arrangement.spacedBy(UiSpacing.Medium),
         ) {
             val sideButtonWeight = 1f / 4f
@@ -816,6 +848,49 @@ private fun PairingDialog(
         if (showDialog && autoDiscoverOnDialogOpen && onDiscoverTarget != null && !discoveringPort) {
             doDiscover()
         }
+    }
+
+    if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) {
+        val fieldStyle = textStyles.main.copy(fontSize = 13.sp)
+        val fieldMargin = DpSize(8.dp, 6.dp)
+        OverlayDialog(
+            show = showDialog,
+            title = stringResource(R.string.button_pair),
+            onDismissRequest = onDismissRequest,
+            onDismissFinished = onDismissFinished,
+            actions = {
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    IconButton(onClick = { scope.launch { doDiscover() } }, enabled = enabled && onDiscoverTarget != null && !discoveringPort) {
+                        Icon(Icons.Rounded.Refresh, stringResource(R.string.button_auto_discover))
+                    }
+                    TextButton(stringResource(R.string.button_cancel), onClick = onDismissRequest,
+                        modifier = Modifier.weight(1f), insideMargin = PaddingValues(6.dp), textStyle = fieldStyle)
+                    TextButton(stringResource(R.string.button_pair), onClick = {
+                        focusManager.clearFocus(); onConfirm(host.trim(), port.trim(), code.trim()); onDismissRequest()
+                    }, enabled = enabled && host.isNotBlank() && port.isNotBlank() && code.isNotBlank(),
+                        modifier = Modifier.weight(1f), colors = ButtonDefaults.textButtonColorsPrimary(),
+                        insideMargin = PaddingValues(6.dp), textStyle = fieldStyle)
+                }
+            },
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    TextField(value = host, onValueChange = { host = it }, label = stringResource(R.string.label_ip_address),
+                        singleLine = true, useLabelAsPlaceholder = true, modifier = Modifier.weight(1.6f), insideMargin = fieldMargin, textStyle = fieldStyle,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }))
+                    TextField(value = port, onValueChange = { port = it.filter(Char::isDigit) }, label = stringResource(R.string.label_port),
+                        singleLine = true, useLabelAsPlaceholder = true, modifier = Modifier.weight(1f), insideMargin = fieldMargin, textStyle = fieldStyle,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }))
+                }
+                TextField(value = code, onValueChange = { code = it }, label = stringResource(R.string.label_wlan_pairing_code),
+                    singleLine = true, useLabelAsPlaceholder = true, modifier = Modifier.fillMaxWidth(), insideMargin = fieldMargin, textStyle = fieldStyle,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }))
+            }
+        }
+        return
     }
 
     OverlayDialog(

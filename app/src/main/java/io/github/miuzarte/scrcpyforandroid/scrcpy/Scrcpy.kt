@@ -450,6 +450,13 @@ class Scrcpy(
         )
     }
 
+    /** Cover input is tied to the server session, so queued events cannot reach a reconnect. */
+    internal suspend fun injectCoverInput(sessionId: UInt, event: CoverInput) = withContext(Dispatchers.IO) {
+        val current = _currentSessionState.value ?: return@withContext
+        if (current.controlSessionId != sessionId || !current.controlEnabled) return@withContext
+        session.injectCoverInput(sessionId, event, current.width, current.height)
+    }
+
     suspend fun injectScroll(
         x: Int,
         y: Int,
@@ -1199,6 +1206,7 @@ class Scrcpy(
                     audioCodecId = audioCodecId,
                     audioCodec = Codec.fromId(audioCodecId, Codec.Type.AUDIO),
                     controlEnabled = controlStream != null,
+                    controlSessionId = scid,
                 )
 
                 val controlWriter = controlStream?.let { stream ->
@@ -1378,6 +1386,29 @@ class Scrcpy(
 
         suspend fun injectText(text: String) = mutex.withLock {
             withControlWriter("injectText") { injectText(text) }
+        }
+
+        internal suspend fun injectCoverInput(id: UInt, event: CoverInput, width: Int, height: Int) = mutex.withLock {
+            if (activeSession?.info?.controlSessionId != id || width <= 0 || height <= 0) return@withLock
+            withControlWriter("coverInput") {
+                fun CoverPoint.pixels() = fitVideoContent(width, height, width, height)
+                    .toVideoPosition(x * width, y * height, width, height)
+                when (event) {
+                    is CoverInput.Touch -> {
+                        val (x, y) = event.point.pixels()
+                        val pressed = event.action == CoverInputController.DOWN || event.action == CoverInputController.MOVE
+                        injectTouch(event.action, event.id, x, y, width, height,
+                            if (pressed) 1f else 0f,
+                            if (event.mouse && event.action != CoverInputController.HOVER) 1 else 0,
+                            if (event.mouse && pressed) 1 else 0)
+                    }
+                    is CoverInput.Scroll -> {
+                        val (x, y) = event.point.pixels()
+                        injectScroll(x, y, width, height, event.horizontal, event.vertical, 0)
+                    }
+                    is CoverInput.Key -> injectKeycode(event.action, event.code, 0, 0)
+                }
+            }
         }
 
         suspend fun setClipboard(text: String, paste: Boolean) = mutex.withLock {
@@ -1670,6 +1701,7 @@ class Scrcpy(
             val audioCodecId: Int = 0,
             val audioCodec: Codec? = null,
             val controlEnabled: Boolean,
+            val controlSessionId: UInt = 0u,
             val legacyPaste: Boolean = false,
             val mouseHover: Boolean = true,
             val killAdbOnClose: Boolean = false,

@@ -22,6 +22,12 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun StreamScreen(activity: StreamActivity) {
+    if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) {
+        // MainActivity already owns the real software pages and process session.
+        // Folding a standalone stream onto the cover returns to that single host.
+        LaunchedEffect(activity) { activity.finish() }
+        return
+    }
     val scrcpy = remember { AppRuntime.scrcpy!! }
     val asBundle by Storage.appSettings.bundleState.collectAsState()
 
@@ -117,6 +123,7 @@ fun FullscreenControlRoute(
     autoExitOnStop: Boolean = false,
     onVideoBoundsInWindowChanged: (Rect?) -> Unit = {},
 ) {
+    val isCover = io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current
     val activity = LocalActivity.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val asBundle by Storage.appSettings.bundleState.collectAsState()
@@ -157,7 +164,8 @@ fun FullscreenControlRoute(
         onVideoSizeChanged = { width, height ->
             if (!isInPip) {
                 activity?.requestedOrientation =
-                    fullscreenRequestedOrientation(
+                    if (isCover) ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    else fullscreenRequestedOrientation(
                         width = width,
                         height = height,
                         ignoreSystemRotationLock = asBundle.fullscreenControlIgnoreSystemRotationLock,

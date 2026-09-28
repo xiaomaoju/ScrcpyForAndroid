@@ -1,5 +1,6 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveTopAppBar
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
@@ -58,7 +59,7 @@ internal fun RecordPreferencesScreen(
         snackbarHost = { AppRuntime.snackbarHostState?.let { SnackbarHost(it) } },
         topBar = {
             BlurredBar(backdrop = blurBackdrop) {
-                TopAppBar(
+                AdaptiveTopAppBar(
                     title = stringResource(R.string.record_title),
                     color =
                         if (blurActive) Color.Transparent

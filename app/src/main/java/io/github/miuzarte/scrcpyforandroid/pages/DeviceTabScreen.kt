@@ -1,6 +1,9 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
+import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay
+import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverContentHeight
 import android.os.SystemClock
+import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -27,10 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.miuzarte.scrcpyforandroid.R
+import io.github.miuzarte.scrcpyforandroid.autocast.AutoCastPolicy
 import io.github.miuzarte.scrcpyforandroid.constants.UiSpacing
 import io.github.miuzarte.scrcpyforandroid.models.ConnectionTarget
 import io.github.miuzarte.scrcpyforandroid.models.DeviceConnectionType
@@ -55,7 +57,7 @@ import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.More
-import top.yukonga.miuix.kmp.menu.OverlayIconDropdownMenu
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayIconDropdownMenu
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
@@ -65,15 +67,13 @@ private val DEVICE_TWO_PANE_CONFIG_MAX_WIDTH = 640.dp
 
 @Composable
 internal fun DeviceTabScreen(
-    viewModelFactory: ViewModelProvider.Factory,
+    viewModel: DeviceTabViewModel,
     scrollBehavior: ScrollBehavior,
     bottomInnerPadding: Dp,
     onOpenReorderDevices: () -> Unit,
     onPreviewGestureLockChanged: (Boolean) -> Unit = {},
     onOpenFullscreenCompat: () -> Unit = {},
 ) {
-    val viewModel: DeviceTabViewModel = viewModel(factory = viewModelFactory)
-
     val navigator = LocalRootNavigator.current
     val haptic = LocalHapticFeedback.current
     var useCompactTopAppBar by remember { mutableStateOf(false) }
@@ -82,10 +82,13 @@ internal fun DeviceTabScreen(
     var twoPaneSideToggleRequest by remember { mutableIntStateOf(0) }
     val blurBackdrop = rememberBlurBackdrop(LocalEnableBlur.current)
     val blurActive = blurBackdrop != null
+    val sessionInfo by viewModel.sessionInfo.collectAsState()
+    val adbConnected by viewModel.adbConnected.collectAsState()
+    val connectedDeviceLabel by viewModel.connectedDeviceLabel.collectAsState()
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop = blurBackdrop) {
+            if (!(LocalCoverDisplay.current && !LocalCoverPanel.current && WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0)) BlurredBar(backdrop = blurBackdrop) {
                 val topAppBarColor =
                     if (blurActive) Color.Transparent
                     else colorScheme.surface
@@ -108,7 +111,14 @@ internal fun DeviceTabScreen(
                     }
                     OverlayIconDropdownMenu(
                         entry = DropdownEntry(
-                            items = listOf(
+                            items = listOfNotNull(
+                                if (LocalCoverDisplay.current && !LocalCoverPanel.current) DropdownItem(
+                                    text = stringResource(R.string.button_add_device),
+                                    onClick = {
+                                        val target = viewModel.currentTarget.value ?: ConnectionTarget.unmarshalFrom(viewModel.quickConnectInput.value)
+                                        target?.let { viewModel.upsertShortcut(DeviceShortcut(addresses = listOf(it.toString()))) }
+                                    },
+                                ) else null,
                                 DropdownItem(
                                     text = stringResource(R.string.device_menu_quick_sort),
                                     onClick = {
@@ -137,7 +147,19 @@ internal fun DeviceTabScreen(
                         )
                     }
                 }
-                if (useCompactTopAppBar) SmallTopAppBar(
+                if (LocalCoverPanel.current) io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveTopAppBar(
+                    title = stringResource(R.string.device_title), color = topAppBarColor, actions = topAppBarActions,
+                ) else if (LocalCoverDisplay.current) Row(
+                    Modifier.fillMaxWidth().height(32.dp).background(colorScheme.surface).padding(start = 12.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val status = stringResource(if (sessionInfo != null) R.string.device_status_mirroring else if (adbConnected) R.string.device_status_adb_connected else R.string.device_status_adb_disconnected)
+                    Text(connectedDeviceLabel.takeIf { adbConnected && it.isNotBlank() } ?: stringResource(R.string.device_title),
+                        modifier = Modifier.weight(1f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
+                    Text(status, fontSize = 10.sp, maxLines = 1, color = if (adbConnected) colorScheme.primary else colorScheme.onSurfaceVariantSummary)
+
+                    topAppBarActions()
+                } else if (useCompactTopAppBar) SmallTopAppBar(
                     title = stringResource(R.string.device_title),
                     color = topAppBarColor,
                     actions = topAppBarActions,
@@ -188,6 +210,9 @@ internal fun DeviceTabPage(
     onTwoPaneSideActionChanged: (Boolean, Boolean) -> Unit = { _, _ -> },
 ) {
     val asBundle by viewModel.asBundle.collectAsState()
+    val isCover = LocalCoverDisplay.current
+    val coverPanel = LocalCoverPanel.current
+    val pinnedCoverControls = isCover && !coverPanel
     val connectionState by viewModel.connectionState.collectAsState()
     val sessionInfo by viewModel.sessionInfo.collectAsState()
     val listingsRefreshBusy by viewModel.listingsRefreshBusy.collectAsState()
@@ -269,7 +294,7 @@ internal fun DeviceTabPage(
     LaunchedEffect(Unit) { viewModel.startConnectionHealthCheckLoop() }
 
     fun openFullscreenControl() {
-        if (viewModel.shouldOpenFullscreenCompat())
+        if (isCover || viewModel.shouldOpenFullscreenCompat())
             onOpenFullscreenCompat()
         else
             viewModel.openStreamActivity(context)
@@ -305,7 +330,7 @@ internal fun DeviceTabPage(
     LaunchedEffect(pendingScrollToPreview, isPreviewCardVisible) {
         if (!pendingScrollToPreview) return@LaunchedEffect
         if (isPreviewCardVisible) return@LaunchedEffect
-        listState.animateScrollToItem(PREVIEW_CARD_ITEM_INDEX)
+        listState.animateScrollToItem(PREVIEW_CARD_ITEM_INDEX + if (AutoCastPolicy.supports(Build.MANUFACTURER, Build.MODEL)) 1 else 0)
     }
 
     // 虚拟按钮的宿主动作: 预览卡上的动作只落在设备页自己的状态上
@@ -592,8 +617,9 @@ internal fun DeviceTabPage(
 
     @Composable
     fun PairingSection() {
-        SectionSmallTitle(stringResource(R.string.device_section_wireless_pairing))
+        if (!pinnedCoverControls) SectionSmallTitle(stringResource(R.string.device_section_wireless_pairing))
         PairingCard(
+            compact = pinnedCoverControls,
             busy = busy,
             autoDiscoverOnDialogOpen = asBundle.adbPairingAutoDiscoverOnDialogOpen,
             onDiscoverTarget = { viewModel.onDiscoverPairingTarget() },
@@ -649,6 +675,7 @@ internal fun DeviceTabPage(
             },
             showFullscreenAction = false,
             onOpenFullscreen = ::openFullscreenControl,
+            showSessionActions = !pinnedCoverControls,
         )
     }
 
@@ -660,7 +687,9 @@ internal fun DeviceTabPage(
         PreviewCard(
             modifier = modifier,
             sessionInfo = sessionInfo,
-            previewHeightDp = asBundle.devicePreviewCardHeightDp.coerceAtLeast(120),
+            previewHeightDp = if (LocalCoverDisplay.current)
+                minOf(asBundle.devicePreviewCardHeightDp, (LocalCoverContentHeight.current.value / 2).toInt()).coerceIn(120, 180)
+            else asBundle.devicePreviewCardHeightDp.coerceAtLeast(120),
             onOpenFullscreen = ::openFullscreenControl,
             directControlEnabled = directControlEnabled,
             onInjectTouch = { action, pointerId, x, y, pressure, actionButton, buttons ->
@@ -761,7 +790,7 @@ internal fun DeviceTabPage(
             else {
                 { viewModel.onDisconnectCurrent(currentTarget) }
             },
-            showFullscreenAction = canShowPreviewControls,
+            showFullscreenAction = canShowPreviewControls && !coverPanel,
             onOpenFullscreen = ::openFullscreenControl,
             reverseSideActions = asBundle.deviceTwoPaneConfigOnRight,
         )
@@ -832,10 +861,10 @@ internal fun DeviceTabPage(
                 AppRuntime.snackbar(R.string.device_switched_profile, device?.name ?: "", profileName)
             },
             modifier = Modifier
-                .padding(bottom = UiSpacing.Medium),
-            minWidth = 96.dp,
+                .padding(bottom = if (isCover) 4.dp else UiSpacing.Medium),
+            minWidth = if (isCover) 64.dp else 96.dp,
             maxWidth = 192.dp,
-            height = 48.dp,
+            height = if (isCover) 32.dp else 48.dp,
             itemSpacing = UiSpacing.Medium,
         )
     }
@@ -860,11 +889,17 @@ internal fun DeviceTabPage(
             state = state,
             bottomInnerPadding = bottomInnerPadding,
         ) {
-            item { StatusSection() }
+            if (!pinnedCoverControls) item { StatusSection() }
+            if (AutoCastPolicy.supports(Build.MANUFACTURER, Build.MODEL)) item {
+                FlipInnerActivationPreference(
+                    checked = asBundle.activateFlipInner,
+                    onCheckedChange = { enabled -> viewModel.updateAsBundle { it.copy(activateFlipInner = enabled) } },
+                )
+            }
             item { DeviceListSection() }
 
             if (!adbConnected) {
-                item { QuickConnectSection() }
+                if (!pinnedCoverControls) item { QuickConnectSection() }
                 item { PairingSection() }
             }
 
@@ -900,13 +935,13 @@ internal fun DeviceTabPage(
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val windowSizeClass = activity?.let { calculateWindowSizeClass(it) }
-        val useTwoPane = maxWidth > maxHeight
+        val useTwoPane = !LocalCoverDisplay.current && (maxWidth > maxHeight
                 || when (windowSizeClass?.widthSizeClass) {
             WindowWidthSizeClass.Compact -> false
             WindowWidthSizeClass.Medium -> false
             WindowWidthSizeClass.Expanded -> true
             else -> false
-        }
+        })
         val availableMaxWidth = maxWidth
         val compactTopAppBar = useTwoPane && canShowPreviewControls
         val showTwoPaneSideAction = useTwoPane && canShowPreviewControls
@@ -928,8 +963,30 @@ internal fun DeviceTabPage(
             viewModel.updateAsBundle { it.copy(deviceTwoPaneConfigOnRight = !it.deviceTwoPaneConfigOnRight) }
         }
 
-        if (!useTwoPane || !canShowPreviewControls) {
-            DeviceListContent(state = listState, includeInlinePreviewControls = true)
+        if (pinnedCoverControls) {
+            Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding(), bottom = bottomInnerPadding)) {
+                CoverConnectionCard(
+                    address = if (adbConnected) currentTarget?.toString().orEmpty() else quickConnectInputTemp,
+                    connected = adbConnected, connecting = adbConnecting, running = sessionInfo != null,
+                    busy = busy, canConnect = ConnectionTarget.unmarshalFrom(quickConnectInputTemp) != null,
+                    canFullscreen = canShowPreviewControls,
+                    onAddressChange = viewModel::setQuickConnectInput,
+                    onSaveAddress = viewModel::saveQuickConnectInput,
+                    onConnect = { ConnectionTarget.unmarshalFrom(quickConnectInputTemp)?.let(viewModel::onQuickConnect) },
+                    onCancelConnect = viewModel::cancelAdbConnect,
+                    onDisconnect = { viewModel.onDisconnectCurrent(currentTarget) },
+                    onStart = viewModel::startScrcpy, onStop = viewModel::stopScrcpy,
+                    onFullscreen = ::openFullscreenControl, onPair = viewModel::startQrPairing,
+                    compact = LocalCoverContentHeight.current < 260.dp,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
+                )
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    DeviceListContent(state = listState, includeInlinePreviewControls = false,
+                        contentPadding = PaddingValues(0.dp), bottomInnerPadding = 0.dp)
+                }
+            }
+        } else if (!useTwoPane || !canShowPreviewControls) {
+            DeviceListContent(state = listState, includeInlinePreviewControls = !coverPanel)
         } else {
             Row(
                 modifier = Modifier

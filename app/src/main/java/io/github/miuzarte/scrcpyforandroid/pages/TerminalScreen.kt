@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -43,7 +46,7 @@ import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.More
-import top.yukonga.miuix.kmp.menu.OverlayIconDropdownMenu
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayIconDropdownMenu
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import java.io.File
@@ -77,8 +80,8 @@ fun TerminalScreen(
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop = blurBackdrop) {
-                SmallTopAppBar(
+            if (!(io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current && WindowInsets.ime.getBottom(LocalDensity.current) > 0)) BlurredBar(backdrop = blurBackdrop) {
+                io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveSmallTopAppBar(
                     title = stringResource(R.string.terminal_title),
                     color =
                         if (blurActive) Color.Transparent
@@ -154,11 +157,16 @@ private fun TerminalPage(
     val context = LocalContext.current
     val density = LocalDensity.current
     val haptic = LocalHapticFeedback.current
+    val isCover = io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val keyboardOpen = WindowInsets.ime.getBottom(density) > 0
 
     val asBundle by viewModel.asBundle.collectAsState()
     val terminalFontSizeSp by viewModel.terminalFontSizeSp.collectAsState()
 
-    val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
+    // The cover host already consumes IME insets for the whole window.
+    val imeBottomDp = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) 0.dp
+    else with(density) { WindowInsets.ime.getBottom(this).toDp() }
     var pinchGestureLock by remember { mutableStateOf(false) }
     var terminalTouchStartX by remember { mutableFloatStateOf(0f) }
     var terminalTouchStartY by remember { mutableFloatStateOf(0f) }
@@ -421,10 +429,10 @@ private fun TerminalPage(
             .fillMaxSize()
             .padding(contentPadding)
             .padding(
-                start = UiSpacing.PageHorizontal,
-                top = UiSpacing.PageHorizontal,
-                end = UiSpacing.PageVertical,
-                bottom = UiSpacing.PageVertical +
+                start = if (isCover) 6.dp else UiSpacing.PageHorizontal,
+                top = if (isCover) 4.dp else UiSpacing.PageHorizontal,
+                end = if (isCover) 6.dp else UiSpacing.PageVertical,
+                bottom = (if (isCover) 4.dp else UiSpacing.PageVertical) +
                         max(bottomInnerPadding.value, imeBottomDp.value).dp,
             ),
     ) {
@@ -456,9 +464,34 @@ private fun TerminalPage(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f).testTag("terminal-output"),
         )
 
+        if (isCover) Row(Modifier.fillMaxWidth().height(40.dp).testTag("cover-terminal-tools"), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { if (keyboardOpen) keyboard?.hide() else openShellSession(true) }, modifier = Modifier.weight(1f).testTag("terminal-keyboard")) {
+                Icon(Icons.Rounded.Keyboard, stringResource(R.string.cover_keyboard))
+            }
+            if (!LocalCoverPanel.current) {
+                TerminalExtraKeyButton("ESC", Modifier.weight(1f)) { viewModel.writeLiteralKey("\u001b") }
+                TerminalExtraKeyButton("TAB", Modifier.weight(1f)) { viewModel.writeSpecialKey(KeyEvent.KEYCODE_TAB) }
+                TerminalExtraKeyButton("CTRL", Modifier.weight(1f), viewModel.ctrlLatched) { viewModel.ctrlLatched = !viewModel.ctrlLatched }
+            }
+            TerminalExtraKeyButton("^C", Modifier.weight(1f)) { viewModel.writeLiteralKey("\u0003") }
+            OverlayIconDropdownMenu(
+                entry = DropdownEntry(listOf(
+                    DropdownItem("ESC", onClick = { viewModel.writeLiteralKey("\u001b") }),
+                    DropdownItem("TAB", onClick = { viewModel.writeSpecialKey(KeyEvent.KEYCODE_TAB) }),
+                    DropdownItem("CTRL", selected = viewModel.ctrlLatched, onClick = { viewModel.ctrlLatched = !viewModel.ctrlLatched }),
+                    DropdownItem("ALT", selected = viewModel.altLatched, onClick = { viewModel.altLatched = !viewModel.altLatched }),
+                ) + listOf("↑" to KeyEvent.KEYCODE_DPAD_UP, "↓" to KeyEvent.KEYCODE_DPAD_DOWN,
+                    "←" to KeyEvent.KEYCODE_DPAD_LEFT, "→" to KeyEvent.KEYCODE_DPAD_RIGHT,
+                    "HOME" to KeyEvent.KEYCODE_MOVE_HOME, "END" to KeyEvent.KEYCODE_MOVE_END,
+                    "PGUP" to KeyEvent.KEYCODE_PAGE_UP, "PGDN" to KeyEvent.KEYCODE_PAGE_DOWN).map { (label, code) ->
+                    DropdownItem(label, onClick = { viewModel.writeSpecialKey(code) })
+                } + listOf("/", "-").map { text -> DropdownItem(text, onClick = { viewModel.writeLiteralKey(text) }) }),
+                modifier = Modifier.weight(1f),
+            ) { Icon(MiuixIcons.More, stringResource(R.string.cd_more)) }
+        } else {
         Row(modifier = Modifier.fillMaxWidth()) {
             TerminalExtraKeyButton(
                 "ESC",
@@ -564,6 +597,7 @@ private fun TerminalPage(
                 viewModel.writeSpecialKey(KeyEvent.KEYCODE_PAGE_DOWN)
             }
         }
+        }
     }
 }
 
@@ -579,14 +613,14 @@ private fun TerminalExtraKeyButton(
         else colorScheme.onSurface
     Box(
         modifier = modifier
-            .height(32.dp)
+            .height(if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) 40.dp else 32.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
             color = content,
-            fontSize = 15.sp,
+            fontSize = if (io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay.current) 12.sp else 15.sp,
         )
     }
 }

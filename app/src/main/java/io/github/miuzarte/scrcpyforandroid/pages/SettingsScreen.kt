@@ -1,5 +1,8 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
+import io.github.miuzarte.scrcpyforandroid.ui.coverPreferenceMargin
+
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveTopAppBar
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -52,9 +55,9 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Download
 import top.yukonga.miuix.kmp.icon.extended.Share
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveDialog as OverlayDialog
 import top.yukonga.miuix.kmp.preference.ArrowPreference
-import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import java.io.File
@@ -105,7 +108,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             BlurredBar(backdrop = blurBackdrop) {
-                TopAppBar(
+                AdaptiveTopAppBar(
                     title = stringResource(R.string.settings_title),
                     color =
                         if (blurActive) Color.Transparent
@@ -330,6 +333,13 @@ fun SettingsPage(
         state = listState,
         bottomInnerPadding = bottomInnerPadding,
     ) {
+        if (io.github.miuzarte.scrcpyforandroid.autocast.AutoCastPolicy.supports(Build.MANUFACTURER, Build.MODEL)) item {
+            Card {
+                ArrowPreference(title = stringResource(R.string.autocast_name),
+                    summary = stringResource(R.string.autocast_widget_hint), insideMargin = coverPreferenceMargin(),
+                    onClick = { context.startActivity(io.github.miuzarte.scrcpyforandroid.autocast.AutoCastIntents.intent(context)) })
+            }
+        }
         item {
             SectionSmallTitle(stringResource(R.string.section_theme))
             Card {
@@ -356,6 +366,7 @@ fun SettingsPage(
                     ),
                 )
                 ArrowPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_theme_settings),
                     summary = stringResource(R.string.pref_summary_theme_settings),
                     onClick = {
@@ -370,6 +381,7 @@ fun SettingsPage(
             SectionSmallTitle(stringResource(R.string.section_screen_mirroring))
             Card {
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_low_latency_audio),
                     summary = stringResource(R.string.pref_summary_low_latency_audio),
                     enabled = !isScrcpyStreaming,
@@ -382,6 +394,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_downsize_on_decode_error),
                     summary = stringResource(R.string.pref_summary_downsize_on_decode_error),
                     checked = asBundle.downsizeOnDecodeError,
@@ -392,6 +405,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_debug_info),
                     summary = stringResource(R.string.pref_summary_debug_info),
                     checked = asBundle.fullscreenDebugInfo,
@@ -402,6 +416,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_hide_simple_settings),
                     summary = stringResource(R.string.pref_summary_hide_simple_settings),
                     checked = asBundle.hideSimpleConfigItems,
@@ -412,6 +427,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_preview_card_on_top),
                     summary = stringResource(R.string.pref_summary_preview_card_on_top),
                     checked = asBundle.previewCardOnTop,
@@ -448,6 +464,7 @@ fun SettingsPage(
                     },
                 )
                 ArrowPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_quick_device_sort),
                     summary = stringResource(R.string.pref_summary_quick_device_sort),
                     onClick = {
@@ -456,6 +473,7 @@ fun SettingsPage(
                     },
                 )
                 ArrowPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_virtual_button_sort),
                     summary = stringResource(R.string.pref_summary_virtual_button_sort),
                     onClick = {
@@ -464,6 +482,7 @@ fun SettingsPage(
                     },
                 )
                 ArrowPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_password_autofill),
                     summary = stringResource(R.string.pref_summary_password_autofill),
                     onClick = {
@@ -472,6 +491,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_clipboard_sync),
                     summary = stringResource(R.string.pref_summary_clipboard_sync),
                     checked = asBundle.realtimeClipboardSyncToDevice,
@@ -488,6 +508,7 @@ fun SettingsPage(
             SectionSmallTitle(stringResource(R.string.section_fullscreen))
             Card {
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_ignore_rotation_lock),
                     summary = stringResource(R.string.pref_summary_ignore_rotation_lock),
                     checked = asBundle.fullscreenControlIgnoreSystemRotationLock,
@@ -498,6 +519,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_back_to_device),
                     summary = stringResource(R.string.pref_summary_back_to_device),
                     checked = asBundle.fullscreenControlBackToDevice,
@@ -508,6 +530,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_show_virtual_buttons),
                     summary = stringResource(R.string.pref_summary_show_virtual_buttons),
                     checked = asBundle.showFullscreenVirtualButtons,
@@ -596,6 +619,7 @@ fun SettingsPage(
                     }
                 }
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_show_floating_button),
                     summary = stringResource(R.string.pref_summary_show_floating_button),
                     checked = asBundle.showFullscreenFloatingButton,
@@ -685,6 +709,7 @@ fun SettingsPage(
                     }
                 }
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_fullscreen_compat_mode),
                     summary = stringResource(R.string.pref_summary_fullscreen_compat_mode),
                     checked = asBundle.fullscreenCompatibilityMode,
@@ -815,6 +840,7 @@ fun SettingsPage(
             Card {
                 val textTitleAppInfo = stringResource(R.string.pref_title_app_info)
                 ArrowPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_battery_optimization),
                     summary = stringResource(R.string.pref_summary_battery_optimization),
                     onClick = {
@@ -1013,6 +1039,7 @@ fun SettingsPage(
                     }
                 }
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_auto_discovery),
                     summary = stringResource(R.string.pref_summary_auto_discovery),
                     checked = asBundle.adbPairingAutoDiscoverOnDialogOpen,
@@ -1023,6 +1050,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_auto_reconnect),
                     summary = stringResource(R.string.pref_summary_auto_reconnect),
                     checked = asBundle.adbAutoReconnectPairedDevice,
@@ -1033,6 +1061,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_auto_load_apps),
                     summary = stringResource(R.string.pref_summary_auto_load_apps),
                     checked = asBundle.adbAutoLoadAppListOnConnect,
@@ -1165,6 +1194,7 @@ fun SettingsPage(
             SectionSmallTitle(stringResource(R.string.section_misc))
             Card {
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_clear_logs_on_exit),
                     summary = stringResource(R.string.pref_summary_clear_logs_on_exit),
                     checked = asBundle.clearLogsOnExit,
@@ -1175,6 +1205,7 @@ fun SettingsPage(
                     },
                 )
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.pref_title_hide_log_box),
                     summary = stringResource(R.string.pref_summary_hide_log_box),
                     checked = asBundle.hideDeviceLogs,
@@ -1221,6 +1252,7 @@ fun SettingsPage(
             SectionSmallTitle("")
             Card {
                 ArrowPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.about_title),
                     summary = updateSummary,
                     onClick = {

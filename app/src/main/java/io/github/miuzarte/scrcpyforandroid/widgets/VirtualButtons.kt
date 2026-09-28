@@ -1,9 +1,13 @@
 package io.github.miuzarte.scrcpyforandroid.widgets
 
+import io.github.miuzarte.scrcpyforandroid.miuix.CoverMenuSheet
 import androidx.annotation.StringRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -32,6 +36,7 @@ import io.github.miuzarte.scrcpyforandroid.constants.UiSpacing
 import io.github.miuzarte.scrcpyforandroid.storage.AppSettings
 import io.github.miuzarte.scrcpyforandroid.storage.Storage.appSettings
 import io.github.miuzarte.scrcpyforandroid.ui.contextClick
+import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -523,7 +528,17 @@ class VirtualButtonBar(
         val previewVisible = remember { VirtualButtonActions.visibleOn(VirtualButtonSurface.PREVIEW).toSet() }
         val visibleActions = outside.filter { it in previewVisible }
 
-        Row(
+        if (LocalCoverDisplay.current) LazyRow(
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            items(visibleActions) { action ->
+                Box(Modifier.width(48.dp)) {
+                    PreviewActionButton(action, enabled, false) { popups.trigger(action) }
+                    PreviewActionPopups(popups, action, popupBottomPadding)
+                }
+            }
+        } else Row(
             modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(UiSpacing.Medium),
         ) {
@@ -635,7 +650,17 @@ class VirtualButtonBar(
                 .fillMaxWidth()
                 .height(thickness)
 
-        if (isVertical) Column(
+        if (LocalCoverDisplay.current) {
+            if (isVertical) LazyColumn(modifier = containerModifier) {
+                items(visibleActions) { action ->
+                    FullscreenAction(action, 48.dp, Modifier.fillMaxWidth(), popups)
+                }
+            } else LazyRow(modifier = containerModifier) {
+                items(visibleActions) { action ->
+                    FullscreenAction(action, thickness, Modifier.width(48.dp), popups)
+                }
+            }
+        } else if (isVertical) Column(
             modifier = containerModifier,
             verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
@@ -871,6 +896,10 @@ class VirtualButtonBar(
         renderInRootScaffold: Boolean = true,
         popupBottomPadding: Dp = 0.dp,
     ) {
+        if (LocalCoverDisplay.current) {
+            CoverMenuSheet(show, entries, onDismissRequest, renderInRootScaffold = renderInRootScaffold)
+            return
+        }
         OverlayCascadingListPopup(
             show = show,
             entries = entries,

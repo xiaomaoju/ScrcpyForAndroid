@@ -1,5 +1,8 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
+import io.github.miuzarte.scrcpyforandroid.ui.coverPreferenceMargin
+
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveTopAppBar
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
@@ -26,7 +29,7 @@ import io.github.miuzarte.scrcpyforandroid.ui.*
 import kotlinx.coroutines.*
 import top.yukonga.miuix.kmp.basic.*
 import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.theme.ThemeColorSpec
@@ -75,7 +78,7 @@ internal fun ThemeSettingsScreen() {
     Scaffold(
         topBar = {
             BlurredBar(backdrop = blurBackdrop) {
-                TopAppBar(
+                AdaptiveTopAppBar(
                     title = stringResource(R.string.pref_title_theme_settings),
                     scrollBehavior = scrollBehavior,
                     color =
@@ -126,6 +129,7 @@ internal fun ThemeSettingsScreen() {
 
                     Card {
                         SwitchPreference(
+                            insideMargin = coverPreferenceMargin(),
                             title = stringResource(R.string.pref_title_monet),
                             summary = stringResource(R.string.pref_summary_monet),
                             checked = asBundle.monet,
@@ -173,6 +177,7 @@ internal fun ThemeSettingsScreen() {
                             }
                         }
                         SwitchPreference(
+                            insideMargin = coverPreferenceMargin(),
                             title = stringResource(R.string.pref_title_squircle),
                             summary = stringResource(R.string.pref_summary_squircle),
                             checked = asBundle.squircle,
@@ -193,6 +198,7 @@ internal fun ThemeSettingsScreen() {
                         // 低版本不显示该开关; 组合处的版本兜底在 MainScreen
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             SwitchPreference(
+                                insideMargin = coverPreferenceMargin(),
                                 title = stringResource(R.string.pref_title_floating_bottom_bar),
                                 summary = stringResource(R.string.pref_summary_floating_bottom_bar),
                                 checked = asBundle.floatingBottomBar,
@@ -204,6 +210,7 @@ internal fun ThemeSettingsScreen() {
                                 asBundle.floatingBottomBar && asBundle.blur != AppSettings.BlurMode.NONE,
                             ) {
                                 SwitchPreference(
+                                    insideMargin = coverPreferenceMargin(),
                                     title = stringResource(R.string.pref_title_liquid_glass),
                                     summary = stringResource(R.string.pref_summary_liquid_glass),
                                     checked = asBundle.floatingBottomBar &&
@@ -234,6 +241,7 @@ internal fun ThemeSettingsScreen() {
                             },
                         )
                         SwitchPreference(
+                            insideMargin = coverPreferenceMargin(),
                             title = stringResource(R.string.pref_title_enable_swipe_back),
                             summary = stringResource(R.string.pref_summary_enable_swipe_back),
                             checked = asBundle.swipeBack,

@@ -18,8 +18,11 @@ import top.yukonga.miuix.kmp.basic.SnackbarResult
 // 用于不同 activity 之间传递实例
 object AppRuntime {
     private lateinit var appContext: Context
+    @Volatile internal var autoCast: io.github.miuzarte.scrcpyforandroid.autocast.AutoCastController? = null
+        private set
 
     fun init(context: Context) {
+        if (::appContext.isInitialized) return
         appContext = context.applicationContext
         AdbMdnsDiscoverer.init(appContext)
     }
@@ -86,10 +89,19 @@ object AppRuntime {
      */
     internal fun releaseSession() {
         synchronized(sessionLock) {
+            if (autoCast?.active == true) return
             sessionServices?.autoReconnectManager?.close()
             AppScreenOn.release()
             sessionServices = null
             scrcpy = null
+            autoCast = null
+        }
+    }
+
+    internal fun obtainAutoCast(): io.github.miuzarte.scrcpyforandroid.autocast.AutoCastController = synchronized(sessionLock) {
+        autoCast ?: obtainSession(Scrcpy.SessionConfig()).let { session ->
+            io.github.miuzarte.scrcpyforandroid.autocast.AutoCastController(appContext, session.scrcpy, session.services)
+                .also { autoCast = it }
         }
     }
 

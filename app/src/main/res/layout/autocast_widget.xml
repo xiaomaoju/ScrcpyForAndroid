@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/autocast_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="@drawable/autocast_widget_background"
+    android:contentDescription="@string/autocast_open">
+
+    <ImageView android:layout_width="56dp" android:layout_height="56dp"
+        android:src="@drawable/ic_autocast" android:importantForAccessibility="no" />
+    <TextView android:id="@+id/autocast_widget_title"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="20dp" android:gravity="center"
+        android:text="@string/autocast_open" android:textColor="#E0F2CE"
+        android:textSize="26sp" android:textStyle="bold" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" android:gravity="center"
+        android:text="@string/autocast_widget_hint" android:textColor="#C6CFC0" android:textSize="14sp" />
+</LinearLayout>

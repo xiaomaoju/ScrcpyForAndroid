@@ -1,6 +1,7 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
 import android.content.Context
+import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.StringRes
@@ -9,6 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.github.miuzarte.scrcpyforandroid.R
 import io.github.miuzarte.scrcpyforandroid.StreamActivity
+import io.github.miuzarte.scrcpyforandroid.autocast.AutoCastIntents
+import io.github.miuzarte.scrcpyforandroid.autocast.AutoCastPolicy
+import io.github.miuzarte.scrcpyforandroid.autocast.AutoCastShell
 import io.github.miuzarte.scrcpyforandroid.models.ConnectionTarget
 import io.github.miuzarte.scrcpyforandroid.models.DeviceConnectionType
 import io.github.miuzarte.scrcpyforandroid.models.DeviceShortcut
@@ -69,6 +73,7 @@ internal class DeviceTabViewModel(
 ): ViewModel() {
 
     val scrcpyListings: Scrcpy.Listings get() = scrcpy.listings
+    var hostOnCover: Boolean = false
 
     private val adbCoordinator = connectionServices.adbCoordinator
     private val connectionStateStore = connectionServices.connectionStateStore
@@ -176,12 +181,8 @@ internal class DeviceTabViewModel(
         _savedShortcuts,
         AppRuntime.currentConnectionProfileId,
     ) { session, shortcuts, runtimeProfileId ->
-        val target = session.currentTarget
-        if (session.isConnected && target != null)
-            shortcuts.firstOrNull { it.matchesAddress(target) }?.scrcpyProfileId
-                ?: runtimeProfileId
-        else
-            runtimeProfileId
+        ScrcpyLaunchSettings.profileId(
+            session.currentTarget.takeIf { session.isConnected }, shortcuts, runtimeProfileId)
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
@@ -193,8 +194,7 @@ internal class DeviceTabViewModel(
         soBundle,
         scrcpyProfilesState,
     ) { profileId, globalBundle, profiles ->
-        if (profileId == ScrcpyOptions.GLOBAL_PROFILE_ID) globalBundle
-        else profiles.profiles.firstOrNull { it.id == profileId }?.bundle ?: globalBundle
+        ScrcpyLaunchSettings.bundle(profileId, globalBundle, profiles)
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
@@ -329,11 +329,7 @@ internal class DeviceTabViewModel(
     }
 
     fun resolveScrcpyBundle(profileId: String): ScrcpyOptions.Bundle {
-        if (profileId == ScrcpyOptions.GLOBAL_PROFILE_ID) return soBundle.value
-        return scrcpyProfilesState.value.profiles
-            .firstOrNull { it.id == profileId }
-            ?.bundle
-            ?: soBundle.value
+        return ScrcpyLaunchSettings.bundle(profileId, soBundle.value, scrcpyProfilesState.value)
     }
 
     fun setQuickConnectInput(value: String) {
@@ -770,6 +766,19 @@ internal class DeviceTabViewModel(
         openFullscreen: Boolean = false,
         startAppOverride: String? = null,
     ) {
+        // A start immediately after toggling must not race the normal debounced settings save.
+        val currentSettings = _asBundle.value
+        if (currentSettings != appSettings.bundleState.value) appSettings.saveBundle(currentSettings)
+        val activate = currentSettings.activateFlipInner
+        val supported = AutoCastPolicy.supports(Build.MANUFACTURER, Build.MODEL)
+        val localCover = supported && hostOnCover && AutoCastIntents.isLocalTarget(currentTarget.value)
+        // Turning automatic activation off does not opt an existing dual-screen cast out of cleanup.
+        val alreadyPrepared = !activate && localCover && AutoCastPolicy.preparedInner(
+            AutoCastPolicy.snapshot(AutoCastShell.execute("cmd device_state state")))
+        if (AutoCastPolicy.routeMainThroughActivation(activate, supported, hostOnCover, localCover, alreadyPrepared)) {
+            AutoCastIntents.launch(AppRuntime.context, startAppOverride)
+            return
+        }
         val activeBundle = resolveScrcpyBundle(connectedScrcpyProfileId.value)
         val options = scrcpyOptions.toClientOptions(activeBundle).fix()
         val resolvedOptions = startAppOverride
@@ -1203,7 +1212,7 @@ internal class DeviceTabViewModel(
         viewModelScope.launch {
             try {
                 autoReconnectManager.runKeepAliveLoop(
-                    isForeground = { _isAppInForeground.value },
+                    isForeground = { _isAppInForeground.value && AppRuntime.autoCast?.active != true },
                     intervalMs = ADB_KEEPALIVE_INTERVAL_MS,
                     connectTimeoutMs = ADB_CONNECT_TIMEOUT_MS,
                     keepAliveTimeoutMs = ADB_KEEPALIVE_TIMEOUT_MS,
@@ -1235,7 +1244,7 @@ internal class DeviceTabViewModel(
         _autoReconnectLoopStarted = true
         viewModelScope.launch {
             autoReconnectManager.runAutoReconnectLoop(
-                isForeground = { _isAppInForeground.value },
+                isForeground = { _isAppInForeground.value && AppRuntime.autoCast?.active != true },
                 isAutoReconnectEnabled = { _asBundle.value.adbAutoReconnectPairedDevice },
                 isBusy = { _busy.value },
                 isAdbConnecting = { _adbConnecting.value },
@@ -1428,7 +1437,7 @@ internal class DeviceTabViewModel(
                 // 这些动作持有 ADB 全局连接锁, 探测等锁超时会误判"已断开",
                 // 进而触发断开清理, 破坏正在进行的握手 (如 USB 切换时的慢握手/授权弹窗)
                 val connectionActionInFlight =
-                    _adbConnecting.value || _activeDeviceActionId.value != null
+                    _adbConnecting.value || _activeDeviceActionId.value != null || AppRuntime.autoCast?.active == true
                 if (!connectionActionInFlight) {
                     try {
                         val state = connectionState.value.adbSession
@@ -1438,7 +1447,7 @@ internal class DeviceTabViewModel(
                                 connectionController.keepAliveCheck(ADB_KEEPALIVE_TIMEOUT_MS)
                             }.getOrDefault(false)
 
-                            if (!isActuallyConnected) {
+                            if (!isActuallyConnected && AppRuntime.autoCast?.active != true) {
                                 // 检测到连接已断开
                                 val target = state.currentTarget
                                 if (target != null) {

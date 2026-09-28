@@ -137,6 +137,7 @@ class AppSettings(context: Context): Settings(context, "AppSettings") {
         )
 
         // Scrcpy
+        val ACTIVATE_FLIP_INNER = Pair(booleanPreferencesKey("activate_flip_inner"), true)
         val LOW_LATENCY = Pair(
             booleanPreferencesKey("low_latency"),
             false,
@@ -341,6 +342,7 @@ class AppSettings(context: Context): Settings(context, "AppSettings") {
         val floatingBottomBarBlur: Boolean,
 
         // Scrcpy
+        val activateFlipInner: Boolean,
         val lowLatency: Boolean,
         val downsizeOnDecodeError: Boolean,
         val fullscreenDebugInfo: Boolean,
@@ -410,6 +412,7 @@ class AppSettings(context: Context): Settings(context, "AppSettings") {
         bundleField(FLOATING_BOTTOM_BAR_BLUR) { it.floatingBottomBarBlur },
 
         // Scrcpy
+        bundleField(ACTIVATE_FLIP_INNER) { it.activateFlipInner },
         bundleField(LOW_LATENCY) { it.lowLatency },
         bundleField(DOWNSIZE_ON_DECODE_ERROR) { it.downsizeOnDecodeError },
         bundleField(FULLSCREEN_DEBUG_INFO) { it.fullscreenDebugInfo },
@@ -480,6 +483,7 @@ class AppSettings(context: Context): Settings(context, "AppSettings") {
         floatingBottomBarBlur = preferences.read(FLOATING_BOTTOM_BAR_BLUR),
 
         // Scrcpy
+        activateFlipInner = preferences.read(ACTIVATE_FLIP_INNER),
         lowLatency = preferences.read(LOW_LATENCY),
         downsizeOnDecodeError = preferences.read(DOWNSIZE_ON_DECODE_ERROR),
         fullscreenDebugInfo = preferences.read(FULLSCREEN_DEBUG_INFO),

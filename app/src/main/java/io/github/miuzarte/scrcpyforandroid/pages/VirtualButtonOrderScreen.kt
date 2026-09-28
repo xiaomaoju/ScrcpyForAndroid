@@ -1,5 +1,8 @@
 package io.github.miuzarte.scrcpyforandroid.pages
 
+import io.github.miuzarte.scrcpyforandroid.ui.coverPreferenceMargin
+
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveTopAppBar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -45,7 +48,7 @@ internal fun VirtualButtonOrderScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             BlurredBar(backdrop = blurBackdrop) {
-                TopAppBar(
+                AdaptiveTopAppBar(
                     title = stringResource(R.string.vb_order_title),
                     color =
                         if (blurActive) Color.Transparent
@@ -122,6 +125,7 @@ internal fun VirtualButtonOrderPage(
         item {
             Card {
                 SwitchPreference(
+                    insideMargin = coverPreferenceMargin(),
                     title = stringResource(R.string.vb_order_button_text),
                     summary = stringResource(R.string.vb_order_hint),
                     checked = asBundle.previewVirtualButtonShowText,

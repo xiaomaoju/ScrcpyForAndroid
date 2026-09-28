@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="autocast_tile_name">Inner screen cast</string>
+    <string name="device_activate_flip_inner">Activate zlip inner screen</string>
+    <string name="device_activate_flip_inner_summary">Prepare the inner screen when mirroring this phone on its cover; applies next time</string>
     <string name="app_name">Scrcpy for Android</string>
 
     <!-- Main Tab Labels -->
@@ -630,4 +633,51 @@
     <string name="language_english">English</string>
     <string name="language_chinese">Chinese</string>
 
+    <string name="cover_switch_touch">Switch to direct touch</string>
+    <string name="cover_switch_mouse">Switch to mouse trackpad</string>
+    <string name="cover_details">Software pages</string>
+    <string name="cover_exit">Leave mirroring controls</string>
+    <string name="cover_return_devices">Return to devices (keep mirroring)</string>
+    <string name="cover_stopped">Mirroring stopped</string>
+    <string name="cover_trackpad_hint">Slide to move\nTap to click\nTwo fingers to scroll\nHold to drag</string>
+    <string name="cover_control_disabled">Remote control is disabled</string>
+    <string name="cover_keyboard">Keyboard input</string>
+    <string name="cover_remote_back">Remote Back</string>
+    <string name="cover_remote_home">Remote Home</string>
+    <string name="cover_remote_recent">Remote recent apps</string>
+    <string name="autocast_name">Flip5 inner screen</string>
+    <string name="autocast_open">Open inner screen</string>
+    <string name="autocast_continue">Continue</string>
+    <string name="autocast_repair">Repair connection</string>
+    <string name="autocast_opening">Opening…</string>
+    <string name="autocast_widget_hint">Control this phone from the cover screen</string>
+    <string name="autocast_connecting">Connecting to this phone…</string>
+    <string name="autocast_setup">Set up this phone once</string>
+    <string name="autocast_pairing">Pairing with this phone…</string>
+    <string name="autocast_ready">Connected. Close the phone to begin.</string>
+    <string name="autocast_preparing">Preparing the inner screen…</string>
+    <string name="autocast_starting">Waiting for the inner screen picture…</string>
+    <string name="autocast_running">Controlling the inner screen</string>
+    <string name="autocast_recovering">Restoring the connection…</string>
+    <string name="autocast_stopping">Restoring normal screen behavior…</string>
+    <string name="autocast_failed">Could not open the inner screen</string>
+    <string name="autocast_unsupported">This shortcut requires a Samsung Galaxy Z Flip5.</string>
+    <string name="autocast_end">End mirroring</string>
+    <string name="autocast_close">Close</string>
+    <string name="autocast_retry">Try again</string>
+    <string name="autocast_original_app">Open app settings and devices</string>
+    <string name="autocast_setup_action">Open wireless debugging</string>
+    <string name="autocast_pair_code">Enter pairing code</string>
+    <string name="autocast_notification_needed">Notifications are needed to enter the pairing code without closing the system pairing window. Tap the setup button to enable notifications, then return here.</string>
+    <string name="autocast_setup_hint">Enable Developer options and Wireless debugging. Select Pair device with pairing code. Keep that window open, pull down notifications, and enter its six-digit code in the Flip5 inner screen notification. The phone address and port are found automatically.</string>
+    <string name="autocast_add_widget">In Settings → Cover screen → Widgets, add Flip5 inner screen. After setup, tap Open inner screen on the cover to connect and start automatically.</string>
+    <string name="autocast_control_hint">Slide to move, tap to click. End mirroring restores the temporary fold state.</string>
+    <string name="autocast_copy_diagnostics">Copy diagnostics</string>
+    <string name="autocast_diagnostics_copied">Diagnostics copied</string>
+    <string name="cover_tools">Tools</string>
+    <string name="cover_close_panel">Collapse panel</string>
+    <string name="cover_mouse_pad">Mouse trackpad</string>
+    <string name="cover_touch_mode">Direct touch</string>
+    <string name="cover_two_pane">Switch to two panes</string>
+    <string name="cover_auto_layout">Restore automatic layout</string>
 </resources>

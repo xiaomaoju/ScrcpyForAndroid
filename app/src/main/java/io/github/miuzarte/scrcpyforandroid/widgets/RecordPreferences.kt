@@ -13,7 +13,7 @@ import io.github.miuzarte.scrcpyforandroid.services.NativeRecordingSupport
 import io.github.miuzarte.scrcpyforandroid.ui.contextClick
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.preference.ArrowPreference
-import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.textStyles
 

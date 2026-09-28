@@ -1,5 +1,6 @@
 package io.github.miuzarte.scrcpyforandroid
 
+import io.github.miuzarte.scrcpyforandroid.scaffolds.CoverScrollableContent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -47,9 +48,9 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Close
 import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.icon.extended.Ok
-import top.yukonga.miuix.kmp.menu.OverlayIconDropdownMenu
+import io.github.miuzarte.scrcpyforandroid.miuix.OverlayIconDropdownMenu
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import io.github.miuzarte.scrcpyforandroid.scaffolds.AdaptiveDialog as OverlayDialog
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.squircle.LocalSquircleEnabled
@@ -93,10 +94,9 @@ class LockscreenPasswordActivity: LocalizedActivity() {
                     LocalSquircleEnabled provides asBundle.squircle,
                     LocalSnackbarController provides snackbarController,
                 ) {
-                    LockscreenPasswordScreen(
-                        activity = this,
-                        hostState = hostState,
-                    )
+                    CoverDisplayContent {
+                        LockscreenPasswordScreen(activity = this, hostState = hostState)
+                    }
                 }
             }
         }
@@ -610,39 +610,41 @@ private fun PasswordEditorSheet(
             }
         },
     ) {
-        Column(
-            modifier = Modifier.padding(vertical = UiSpacing.Large),
-            verticalArrangement = Arrangement.spacedBy(UiSpacing.ContentVertical),
-        ) {
-            TextField(
-                value = nameBuffer,
-                onValueChange = { nameBuffer = it },
-                label = stringResource(R.string.label_name),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = UiSpacing.Large),
-            )
-            AnimatedVisibility(mode == PasswordDialogMode.Create) {
+        CoverScrollableContent {
+            Column(
+                modifier = Modifier.padding(vertical = UiSpacing.Large),
+                verticalArrangement = Arrangement.spacedBy(UiSpacing.ContentVertical),
+            ) {
                 TextField(
-                    value = passwordBuffer,
-                    onValueChange = { passwordBuffer = it },
-                    label = stringResource(R.string.password_lockscreen_label),
+                    value = nameBuffer,
+                    onValueChange = { nameBuffer = it },
+                    label = stringResource(R.string.label_name),
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        autoCorrectEnabled = false,
-                        imeAction = ImeAction.Done,
-                    ),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = UiSpacing.Large),
                 )
+                AnimatedVisibility(mode == PasswordDialogMode.Create) {
+                    TextField(
+                        value = passwordBuffer,
+                        onValueChange = { passwordBuffer = it },
+                        label = stringResource(R.string.password_lockscreen_label),
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            autoCorrectEnabled = false,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSpacing.Large),
+                    )
+                }
+                Spacer(Modifier.height(UiSpacing.SheetBottom))
             }
-            Spacer(Modifier.height(UiSpacing.SheetBottom))
         }
     }
 }
