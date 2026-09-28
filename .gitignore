@@ -41,6 +41,8 @@ render.experimental.xml
 *.jks
 *.keystore
 .env
+/release.p12
+/release-signing.env
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
