@@ -44,7 +44,16 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
         with:
-          packages: 'platform-tools platforms;android-37 build-tools;37.0.0 ndk;29.0.14206865 cmake;3.22.1'
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+
+      - name: Install Android 37 build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          for package in 'platforms;android-37.0' 'build-tools;37.0.0' 'ndk;29.0.14206865' 'cmake;3.22.1'; do
+            android --sdk="$ANDROID_HOME" sdk install "$package"
+          done
 
       - name: Prepare release version
         id: version
