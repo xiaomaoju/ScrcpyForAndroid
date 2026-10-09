@@ -56,11 +56,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.github.miuzarte.scrcpyforandroid"
+        applicationId = "io.github.quildren.scrcpyforzflip5"
         minSdk = 26
         targetSdk = 37
-        versionCode = providers.gradleProperty("ciVersionCode").orNull?.toInt() ?: 58
-        versionName = "0.6.6-flip5.11"
+        versionCode = providers.gradleProperty("ciVersionCode").orNull?.toInt() ?: 100007
+        versionName = "0.6.6-flip5.14"
         providers.gradleProperty("ciVersionName").orNull?.let { versionName = it }
 
         externalNativeBuild {

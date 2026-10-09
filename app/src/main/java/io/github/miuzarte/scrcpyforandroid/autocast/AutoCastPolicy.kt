@@ -1,14 +1,20 @@
 package io.github.miuzarte.scrcpyforandroid.autocast
 
-/** Flip5-only decisions. Never infer a fold state from its numeric identifier. */
+/** Flip5/Flip6 decisions. Never infer a fold state from its numeric identifier. */
 internal object AutoCastPolicy {
     data class FoldState(val id: Int, val name: String)
     data class FoldSnapshot(val current: FoldState, val base: FoldState, val override: FoldState?)
 
     private val statePattern = Regex("(?:identifier|mIdentifier)=(\\d+),\\s*(?:name|mName)='([^']+)'")
 
+    // Regional variants share these prefixes; Japanese carrier models use separate names.
+    private val modelPrefixes = listOf("SM-F731", "SM-F741")
+    private val carrierModels = setOf("SC-54D", "SCG23", "SC-54E", "SCG29")
+
     fun supports(manufacturer: String, model: String): Boolean =
-        manufacturer.equals("samsung", ignoreCase = true) && model.uppercase().startsWith("SM-F731")
+        manufacturer.equals("samsung", ignoreCase = true) &&
+            (modelPrefixes.any { model.startsWith(it, ignoreCase = true) } ||
+                model.uppercase() in carrierModels)
 
     fun routeMainThroughActivation(enabled: Boolean, supported: Boolean, onCover: Boolean, localTarget: Boolean,
         alreadyPrepared: Boolean = false): Boolean = (enabled || alreadyPrepared) && supported && onCover && localTarget

@@ -3,7 +3,6 @@ package io.github.miuzarte.scrcpyforandroid.pages
 import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverDisplay
 import io.github.miuzarte.scrcpyforandroid.ui.LocalCoverContentHeight
 import android.os.SystemClock
-import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -32,7 +31,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import io.github.miuzarte.scrcpyforandroid.R
-import io.github.miuzarte.scrcpyforandroid.autocast.AutoCastPolicy
 import io.github.miuzarte.scrcpyforandroid.constants.UiSpacing
 import io.github.miuzarte.scrcpyforandroid.models.ConnectionTarget
 import io.github.miuzarte.scrcpyforandroid.models.DeviceConnectionType
@@ -330,7 +328,7 @@ internal fun DeviceTabPage(
     LaunchedEffect(pendingScrollToPreview, isPreviewCardVisible) {
         if (!pendingScrollToPreview) return@LaunchedEffect
         if (isPreviewCardVisible) return@LaunchedEffect
-        listState.animateScrollToItem(PREVIEW_CARD_ITEM_INDEX + if (AutoCastPolicy.supports(Build.MANUFACTURER, Build.MODEL)) 1 else 0)
+        listState.animateScrollToItem(PREVIEW_CARD_ITEM_INDEX + 1)
     }
 
     // 虚拟按钮的宿主动作: 预览卡上的动作只落在设备页自己的状态上
@@ -890,7 +888,7 @@ internal fun DeviceTabPage(
             bottomInnerPadding = bottomInnerPadding,
         ) {
             if (!pinnedCoverControls) item { StatusSection() }
-            if (AutoCastPolicy.supports(Build.MANUFACTURER, Build.MODEL)) item {
+            item {
                 FlipInnerActivationPreference(
                     checked = asBundle.activateFlipInner,
                     onCheckedChange = { enabled -> viewModel.updateAsBundle { it.copy(activateFlipInner = enabled) } },

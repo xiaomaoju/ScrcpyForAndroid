@@ -6,6 +6,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.util.Log
+import io.github.miuzarte.scrcpyforandroid.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +36,7 @@ class UsbAdbDeviceWatcher(
         private const val ADB_INTERFACE_CLASS = 0xFF
 
         // USB 权限 Action
-        private const val ACTION_USB_PERMISSION = "io.github.miuzarte.scrcpyforandroid.USB_PERMISSION"
+        private const val ACTION_USB_PERMISSION = "${BuildConfig.APPLICATION_ID}.USB_PERMISSION"
     }
 
     // USB 管理器
@@ -332,7 +333,7 @@ class UsbPermissionReceiver: BroadcastReceiver() {
 
     companion object {
         private const val TAG = "UsbPermissionReceiver"
-        private const val ACTION_USB_PERMISSION = "io.github.miuzarte.scrcpyforandroid.USB_PERMISSION"
+        private const val ACTION_USB_PERMISSION = "${BuildConfig.APPLICATION_ID}.USB_PERMISSION"
     }
 }
 

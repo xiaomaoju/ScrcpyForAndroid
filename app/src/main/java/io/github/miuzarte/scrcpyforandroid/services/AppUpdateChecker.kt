@@ -17,11 +17,11 @@ import java.net.URL
 object AppUpdateChecker {
     private const val TAG = "AppUpdateChecker"
     const val RELEASES_API_URL =
-        "https://api.github.com/repos/Miuzarte/ScrcpyForAndroid/releases?per_page=10"
+        "https://api.github.com/repos/xiaomaoju/ScrcpyForAndroid/releases?per_page=10"
     const val RELEASES_URL =
-        "https://github.com/Miuzarte/ScrcpyForAndroid/releases"
+        "https://github.com/xiaomaoju/ScrcpyForAndroid/releases"
     const val REPO_URL =
-        "https://github.com/Miuzarte/ScrcpyForAndroid"
+        "https://github.com/xiaomaoju/ScrcpyForAndroid"
     const val CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000L
 
     data class ReleaseInfo(
@@ -68,7 +68,7 @@ object AppUpdateChecker {
                 readTimeout = 10_000
                 setRequestProperty("Accept", "application/vnd.github+json")
                 setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
-                setRequestProperty("User-Agent", "ScrcpyForAndroid/$currentVersion")
+                setRequestProperty("User-Agent", "ScrcpyForzFlip5/$currentVersion")
             }
             try {
                 val responseCode = connection.responseCode

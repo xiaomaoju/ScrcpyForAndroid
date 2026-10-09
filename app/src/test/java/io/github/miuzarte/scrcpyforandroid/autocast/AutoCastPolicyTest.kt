@@ -35,18 +35,43 @@ class AutoCastPolicyTest {
         assertTrue(AutoCastPolicy.shouldPrepareInner(false, true))
         assertTrue(AutoCastPolicy.shouldPrepareInner(true, true))
     }
-    @Test fun manualStartActivatesOnlyForEnabledLocalFlip5Cover() {
+    @Test fun manualStartActivatesOnlyForEnabledLocalSupportedCover() {
         assertTrue(AutoCastPolicy.routeMainThroughActivation(true, true, true, true))
         assertFalse(AutoCastPolicy.routeMainThroughActivation(false, true, true, true))
         assertFalse(AutoCastPolicy.routeMainThroughActivation(true, false, true, true))
         assertFalse(AutoCastPolicy.routeMainThroughActivation(true, true, false, true))
         assertFalse(AutoCastPolicy.routeMainThroughActivation(true, true, true, false))
     }
-    @Test fun onlyFlip5IsAdmitted() {
-        assertTrue(AutoCastPolicy.supports("samsung", "SM-F7310"))
-        assertTrue(AutoCastPolicy.supports("Samsung", "SM-F731B"))
-        assertFalse(AutoCastPolicy.supports("samsung", "SM-F741B"))
-        assertFalse(AutoCastPolicy.supports("Google", "SM-F731B"))
+    @Test fun allOfficialFlip5AndFlip6ModelsAreAdmittedAndRouteLocalCoverStarts() {
+        // Samsung Knox device list, including BE variants and Japanese carrier names.
+        val models = listOf(
+            "SM-F7310", "SM-F731B", "SM-F731BE", "SM-F731N", "SM-F731U",
+            "SM-F731U1", "SM-F731W", "SM-F731Q", "SC-54D", "SCG23",
+            "SM-F7410", "SM-F741B", "SM-F741BE", "SM-F741N", "SM-F741U",
+            "SM-F741U1", "SM-F741W", "SM-F741Q", "SC-54E", "SCG29",
+        )
+        models.forEach { model ->
+            val supported = AutoCastPolicy.supports("samsung", model)
+            assertTrue(model, supported)
+            assertTrue(model, AutoCastPolicy.routeMainThroughActivation(true, supported, true, true))
+            assertFalse(model, AutoCastPolicy.routeMainThroughActivation(false, supported, true, true))
+            assertFalse(model, AutoCastPolicy.routeMainThroughActivation(true, supported, false, true))
+            assertFalse(model, AutoCastPolicy.routeMainThroughActivation(true, supported, true, false))
+            assertFalse(model, AutoCastPolicy.supports("Google", model))
+        }
+    }
+
+    @Test fun regionalSuffixesAndModelCaseDoNotBlockSupportedFamilies() {
+        listOf("SM-F731B/DS", "SM-F741B/DS", "sm-f731u1", "sm-f741be", "sc-54d", "scg29").forEach {
+            assertTrue(it, AutoCastPolicy.supports("Samsung", it))
+        }
+    }
+
+    @Test fun otherGenerationsFoldModelsAndPartialCarrierNamesAreNotAdmitted() {
+        listOf("", "SM-F73", "SM-F74", "SM-F721B", "SM-F761B", "SM-F766B", "SM-F946B", "SM-F956B",
+            "SC-54C", "SC-55D", "SC-55E", "SCG22", "SCG28", "SCG35", "SC-54E-extra", "SCG290").forEach {
+            assertFalse(it, AutoCastPolicy.supports("samsung", it))
+        }
     }
 
     @Test fun dualStateIsResolvedByMeaningInsteadOfAssumingFour() {

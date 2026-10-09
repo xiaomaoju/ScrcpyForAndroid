@@ -60,7 +60,7 @@
         </activity>
 
         <!-- Compatibility entry used by cover launchers and user-defined routine shortcuts. -->
-        <activity-alias android:name=".AutoCastActivity" android:targetActivity=".MainActivity" android:exported="true" />
+        <activity-alias android:name="${applicationId}.AutoCastActivity" android:targetActivity=".MainActivity" android:exported="true" />
 
         <service android:name=".autocast.AutoCastTileService" android:label="@string/autocast_tile_name"
             android:icon="@drawable/ic_autocast_tile" android:exported="true"
@@ -100,7 +100,7 @@
             android:name=".nativecore.UsbPermissionReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="io.github.miuzarte.scrcpyforandroid.USB_PERMISSION" />
+                <action android:name="${applicationId}.USB_PERMISSION" />
             </intent-filter>
         </receiver>
 

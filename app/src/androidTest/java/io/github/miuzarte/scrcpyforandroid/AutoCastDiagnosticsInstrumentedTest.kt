@@ -20,11 +20,18 @@ class AutoCastDiagnosticsInstrumentedTest {
 
     @Test fun failureReportCanBeCopiedFromTheCoverStatusPage() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val report = "version=test\nD1: window=1; inner=1080x1920; cover=ON"
+        val trace = AutoCastDiagnostics()
+        trace.begin("version=remote-test; model=SM-F741N")
+        trace.enter(AutoCastStep.W1)
+        trace.note("display wait result", "stage=W1; samples=34; window=0; id=0, state=2, mode=1080x1920")
+        trace.note("fold at display failure", "committed=4; base=0; override=4")
+        trace.note("system displays", "device: 1080 x 1920, state ON; logical: displayId 0, 1080 x 1920, state ON")
+        val message = trace.failure(IllegalStateException("双屏切换后等待 5 秒仍未找到外屏。"), false)
+        val report = trace.report()
         compose.setContent {
             MaterialTheme {
                 Surface {
-                    AutoCastStatusScreen(AutoCastState(AutoCastPhase.ERROR, "D1：检查内外屏状态超时。", report), {}, {}, {}, {})
+                    AutoCastStatusScreen(AutoCastState(AutoCastPhase.ERROR, message, report), {}, {}, {}, {})
                 }
             }
         }

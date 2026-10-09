@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.hardware.usb.*
 import android.os.Build
 import android.util.Log
+import io.github.miuzarte.scrcpyforandroid.BuildConfig
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -46,7 +47,7 @@ class UsbAdbTunnel(
         private const val MAX_USB_PACKET_SIZE = 16384
 
         // USB 权限 Action
-        private const val ACTION_USB_PERMISSION = "io.github.miuzarte.scrcpyforandroid.USB_PERMISSION"
+        private const val ACTION_USB_PERMISSION = "${BuildConfig.APPLICATION_ID}.USB_PERMISSION"
 
         /** bulkTransfer 连续返回 0 的重试上限 */
         private const val MAX_ZERO_TRANSFER_RETRIES = 32
@@ -158,7 +159,7 @@ class UsbAdbTunnel(
             PendingIntent.FLAG_UPDATE_CURRENT
         }
         val permissionIntent = PendingIntent.getBroadcast(
-            context, 0, Intent(ACTION_USB_PERMISSION), flags,
+            context, 0, Intent(ACTION_USB_PERMISSION).setPackage(context.packageName), flags,
         )
         usbManager.requestPermission(usbDevice, permissionIntent)
 

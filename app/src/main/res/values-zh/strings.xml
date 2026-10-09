@@ -3,7 +3,9 @@
     <string name="autocast_tile_name">内屏投屏</string>
     <string name="device_activate_flip_inner">激活zlip内屏</string>
     <string name="device_activate_flip_inner_summary">外屏连接本机时自动准备内屏；下次投屏生效</string>
-    <string name="app_name">Scrcpy for Android</string>
+    <string name="device_flip_model_supported">%1$s · 符合条件</string>
+    <string name="device_flip_model_unsupported">%1$s · 不符合条件</string>
+    <string name="app_name">ScrcpyForzFlip5</string>
 
     <!-- Main Tab Labels -->
     <string name="main_tab_devices">设备</string>
@@ -650,7 +652,7 @@
     <string name="cover_touch_mode">直接触摸</string>
     <string name="cover_two_pane">切换双区布局</string>
     <string name="cover_auto_layout">恢复自动布局</string>
-    <string name="autocast_name">Flip5 内屏投屏</string>
+    <string name="autocast_name">Flip5/6 内屏投屏</string>
     <string name="autocast_open">打开内屏</string>
     <string name="autocast_continue">继续操作</string>
     <string name="autocast_repair">修复连接</string>
@@ -666,7 +668,7 @@
     <string name="autocast_recovering">正在恢复连接…</string>
     <string name="autocast_stopping">正在恢复屏幕状态…</string>
     <string name="autocast_failed">暂时无法打开内屏</string>
-    <string name="autocast_unsupported">此入口仅支持三星 Galaxy Z Flip5。</string>
+    <string name="autocast_unsupported">此入口仅支持三星 Galaxy Z Flip5 或 Z Flip6。</string>
     <string name="autocast_end">结束投屏</string>
     <string name="autocast_close">关闭</string>
     <string name="autocast_retry">重试</string>
@@ -674,8 +676,8 @@
     <string name="autocast_setup_action">打开无线调试</string>
     <string name="autocast_pair_code">输入配对码</string>
     <string name="autocast_notification_needed">首次配对需要通过通知输入配对码，以保持系统配对窗口打开。请点下方按钮启用通知，再返回此页继续。</string>
-    <string name="autocast_setup_hint">先启用开发者选项和无线调试，点“使用配对码配对设备”。保持配对窗口打开，下拉通知栏，在“Flip5 内屏投屏”通知中输入六位配对码。软件会自动识别本机地址与端口。</string>
-    <string name="autocast_add_widget">在系统“设置 → 外屏 → 小组件”添加“Flip5 内屏投屏”。以后合盖点“打开内屏”，即可自动连接并进入操控。</string>
+    <string name="autocast_setup_hint">先启用开发者选项和无线调试，点“使用配对码配对设备”。保持配对窗口打开，下拉通知栏，在“Flip5/6 内屏投屏”通知中输入六位配对码。软件会自动识别本机地址与端口。</string>
+    <string name="autocast_add_widget">在系统“设置 → 外屏 → 小组件”添加“Flip5/6 内屏投屏”。以后合盖点“打开内屏”，即可自动连接并进入操控。</string>
     <string name="autocast_control_hint">滑动移动，轻点点击。结束投屏会恢复本次临时切换的折叠状态。</string>
     <string name="autocast_copy_diagnostics">复制诊断</string>
     <string name="autocast_diagnostics_copied">已复制诊断</string>

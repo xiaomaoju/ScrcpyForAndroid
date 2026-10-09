@@ -246,9 +246,10 @@ private fun AboutContent(
                 val density = LocalDensity.current
                 val textMeasurer = rememberTextMeasurer()
                 val baseTitleFontSize = 32.sp
-                val titleLayout = remember(textMeasurer) {
+                val appName = stringResource(R.string.app_name)
+                val titleLayout = remember(textMeasurer, appName) {
                     textMeasurer.measure(
-                        text = "Scrcpy for Android",
+                        text = appName,
                         style = TextStyle(
                             fontWeight = FontWeight.Black,
                             fontSize = baseTitleFontSize,
@@ -263,7 +264,7 @@ private fun AboutContent(
                     (baseTitleFontSize.value * scale).coerceAtLeast(24f).sp
                 }
                 Text(
-                    text = "Scrcpy for Android",
+                    text = appName,
                     modifier = Modifier
                         .padding(top = 12.dp, bottom = 6.dp)
                         .onGloballyPositioned { coordinates ->
@@ -486,4 +487,3 @@ private fun aboutCardBlendToken(isDark: Boolean): List<BlendColorEntry> =
         BlendColorEntry(Color(0x340034F9), BlurBlendMode.Overlay),
         BlendColorEntry(Color(0xB3FFFFFF), BlurBlendMode.HardLight),
     )
-

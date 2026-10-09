@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.Log
 import android.view.Display
 import io.github.miuzarte.scrcpyforandroid.BuildConfig
+import io.github.miuzarte.scrcpyforandroid.MainActivity
 import io.github.miuzarte.scrcpyforandroid.NativeCoreFacade
 import io.github.miuzarte.scrcpyforandroid.nativecore.NativeAdbService
 import io.github.miuzarte.scrcpyforandroid.models.DeviceShortcuts
@@ -45,6 +46,7 @@ internal class AutoCastController(
     private var restoreFailure: String? = null
     private var framesBefore = 0L
     private var decodedBefore = 0L
+    private var lastSystemDisplays = ""
     private val sizeListener: (Int, Int) -> Unit = { width, height -> scrcpy.updateCurrentSessionSize(width, height) }
 
     val supported: Boolean get() = AutoCastPolicy.supports(Build.MANUFACTURER, Build.MODEL)
@@ -107,7 +109,8 @@ internal class AutoCastController(
     }
 
     private suspend fun connectAndRun() {
-        diagnostics.begin("version=${BuildConfig.VERSION_NAME}; model=${Build.MODEL}; sdk=${Build.VERSION.SDK_INT}; time=${java.time.Instant.now()}")
+        diagnostics.begin("version=${BuildConfig.VERSION_NAME}; model=${Build.MODEL}; sdk=${Build.VERSION.SDK_INT}; os=${Build.VERSION.RELEASE}; build=${Build.DISPLAY}; time=${java.time.Instant.now()}")
+        lastSystemDisplays = ""
         try {
             update(AutoCastPhase.CONNECTING)
             diagnostics.enter(AutoCastStep.P1)
@@ -219,6 +222,15 @@ internal class AutoCastController(
                 NativeAdbService.disconnect()
             }
             try { prepareInnerScreen(retryInnerMode) }
+            catch (error: Exception) {
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                // Capture while the lease is still held. The startup watchdog remains active;
+                // diagnostics must never postpone recovery or replace the original failure.
+                if (diagnostics.step in setOf(AutoCastStep.W1, AutoCastStep.W2, AutoCastStep.D1)) {
+                    recordDisplayFailure()
+                }
+                throw error
+            }
             finally { watchdog.cancelAndJoin() }
         }
     }
@@ -235,6 +247,7 @@ internal class AutoCastController(
             options.newDisplay.isBlank() && options.displayId in -1..Display.DEFAULT_DISPLAY
         // Adopt an externally prepared mode even when configuration validation will fail,
         // so every failed inner-screen attempt can shut it down. Invalid options never activate it.
+        diagnostics.note("before fold activation", displaySnapshot())
         usingDualMode = foldLease.acquire(scope, allowActivation = allowActivation && innerConfiguration)
         if (allowActivation || usingDualMode) {
             diagnostics.enter(AutoCastStep.P1)
@@ -249,32 +262,27 @@ internal class AutoCastController(
         }
         // Samsung can suspend/reparent the already-open window during the state transition.
         // Match the working launcher order: dual mode first, then launch on the cover.
-        delay(1_000)
         diagnostics.enter(AutoCastStep.W1)
-        diagnostics.note("before cover launch", displaySnapshot())
-        val destination = requireNotNull(AutoCastIntents.coverDisplay(context)) { "双屏切换后未找到外屏。" }
-        if (playbackDisplayId != destination.displayId) {
-            val launch = AutoCastShell.execute("am start -W --display ${destination.displayId} " +
-            "-n ${context.packageName}/.MainActivity -a ${AutoCastIntents.ACTION_OPEN} " +
+        val destinationId = awaitCover("双屏切换后等待 5 秒仍未找到外屏。") {
+            AutoCastIntents.coverDisplay(context)?.displayId
+                ?: AutoCastSystemDisplays.cover(readSystemDisplays())?.id
+        }
+        diagnostics.note("cover destination", "id=$destinationId; ${displaySnapshot()}")
+        diagnostics.enter(AutoCastStep.W2)
+        if (playbackDisplayId != destinationId) {
+            val launch = AutoCastShell.execute("am start -W --display $destinationId " +
+            "-n ${context.packageName}/${MainActivity::class.java.name} -a ${AutoCastIntents.ACTION_OPEN} " +
             "-f 0x34000000")
             diagnostics.note("cover launch result", launch)
             check(!launch.contains("Error:", ignoreCase = true) && !launch.contains("Exception")) {
                 "无法在外屏恢复投屏窗口：${launch.take(160)}"
             }
-        }
+        } else diagnostics.note("cover launch result", "window already on cover $destinationId")
         diagnostics.enter(AutoCastStep.D1)
         diagnostics.note("required displays", "source=default display 0 with current positive dimensions; recognized non-default cover ON(${Display.STATE_ON}); window must be on cover")
-        val displays = context.getSystemService(DisplayManager::class.java)
-        try { withTimeout(5_000) {
-            while (true) {
-                val inner = displays.getDisplay(Display.DEFAULT_DISPLAY)
-                val cover = AutoCastIntents.coverDisplay(context)
-                if (inner != null && cover != null && AutoCastPolicy.displaysReady(
-                    inner.displayId, inner.mode.physicalWidth, inner.mode.physicalHeight,
-                    cover.displayId, cover.state == Display.STATE_ON, playbackDisplayId)) break
-                delay(150)
-            }
-        } } finally { diagnostics.note("display check result", displaySnapshot()) }
+        awaitCover("等待 5 秒后外屏窗口仍未就绪，请复制诊断查看屏幕状态和窗口位置。") {
+            if (coverWindowReady(destinationId)) Unit else null
+        }
         diagnostics.note("main settings", "profile=${configured.profileId}; customServer=${configured.session.customServerUri != null}; " +
             "version=${configured.session.serverVersion}; lowLatency=${configured.session.lowLatency}; " +
             "display=${options.displayId}; maxSize=${options.maxSize}; maxFps=${options.maxFps}; " +
@@ -322,6 +330,68 @@ internal class AutoCastController(
         update(AutoCastPhase.RUNNING)
     }
 
+    private suspend fun <T : Any> awaitCover(timeoutMessage: String, findReady: suspend () -> T?): T {
+        var samples = 0
+        var lastFold = "not sampled"
+        var lastDisplays = ""
+        return try {
+            AutoCastDisplayWaiter.await(foldLease.targetId, timeoutMessage, readFold = {
+                lastFold = AutoCastShell.execute("cmd device_state state")
+                AutoCastPolicy.snapshot(lastFold)
+            }, findReady = {
+                samples++
+                val snapshot = displaySnapshot()
+                // Retain transitions, not every identical poll, in the bounded remote report.
+                if (snapshot != lastDisplays) diagnostics.note("display transition", snapshot)
+                lastDisplays = snapshot
+                findReady()
+            })
+        } finally {
+            diagnostics.note("display wait result", "stage=${diagnostics.step}; samples=$samples; $lastDisplays")
+            diagnostics.note("fold at display wait", lastFold)
+        }
+    }
+
+    private suspend fun readSystemDisplays(): List<AutoCastSystemDisplays.LogicalDisplay> {
+        val displays = AutoCastSystemDisplays.parse(AutoCastShell.execute("dumpsys display"))
+        val summary = AutoCastSystemDisplays.summary(displays)
+        if (summary != lastSystemDisplays) diagnostics.note("shell logical displays (app list incomplete)", summary)
+        lastSystemDisplays = summary
+        return displays
+    }
+
+    private suspend fun coverWindowReady(destinationId: Int): Boolean {
+        val displays = context.getSystemService(DisplayManager::class.java)
+        val inner = displays.getDisplay(Display.DEFAULT_DISPLAY)
+        val cover = AutoCastIntents.coverDisplay(context)
+        if (inner != null && cover != null) {
+            return cover.displayId == destinationId && AutoCastPolicy.displaysReady(
+                inner.displayId, inner.mode.physicalWidth, inner.mode.physicalHeight,
+                cover.displayId, cover.state == Display.STATE_ON, playbackDisplayId)
+        }
+        // A fresh shell snapshot is needed for both startup and monitoring; never treat the
+        // initially discovered ID or am start's success as proof that the window is on the cover.
+        return AutoCastSystemDisplays.windowReady(readSystemDisplays(), destinationId, playbackDisplayId)
+    }
+
+    private suspend fun recordDisplayFailure() {
+        diagnostics.note("failure displays before recovery", displaySnapshot())
+        try {
+            val completed = withTimeoutOrNull(1_500) {
+                diagnostics.note("fold at display failure", AutoCastShell.execute("cmd device_state state"))
+                val dump = AutoCastShell.execute("dumpsys display")
+                diagnostics.note("system displays", AutoCastDiagnostics.displayDumpSummary(dump))
+                diagnostics.note("system logical status", AutoCastSystemDisplays.summary(AutoCastSystemDisplays.parse(dump)))
+                true
+            }
+            if (completed == null) diagnostics.note("system displays", "diagnostic deadline reached (1500ms)")
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            diagnostics.note("system displays", "unavailable: ${error.javaClass.simpleName}")
+        }
+    }
+
     private suspend fun monitor() {
         diagnostics.enter(AutoCastStep.M1)
         while (currentCoroutineContext().isActive) {
@@ -330,7 +400,7 @@ internal class AutoCastController(
             if (usingDualMode) {
                 val fold = AutoCastPolicy.snapshot(AutoCastShell.execute("cmd device_state state"))
                 if (!AutoCastPolicy.innerDefaultActive(fold, foldLease.targetId) ||
-                    playbackDisplayId != AutoCastIntents.coverDisplay(context)?.displayId) return
+                    !coverWindowReady(playbackDisplayId)) return
             }
         }
     }

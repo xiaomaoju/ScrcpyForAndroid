@@ -1,5 +1,57 @@
 # Flip5 测试版与 UI 原型
 
+## 系统外屏补充查询（build.7）
+
+[下载 ARM64 Release APK](ScrcpyForzFlip5-0.6.6-flip5.14-build.7-arm64-v8a-release.apk) · [SHA256 校验文件](ScrcpyForzFlip5-0.6.6-flip5.14-build.7-arm64-v8a-release.apk.sha256)
+
+2026-10-09，版本 `0.6.6-flip5.14-build.7`，`versionCode 100007`，包名、名称和 Release 签名不变。测试者 SM-F741N 的 build.6 日志证明：整个等待期间双屏状态有效，系统报告逻辑外屏 1 为 748×720、ON，应用却持续只枚举到屏幕 0。该报告支持显示器枚举差异，不能仅凭它确定系统过滤的原因。
+
+本版在应用枚举不完整时，使用已有本机 ADB 读取系统逻辑显示信息，补充 W1 外屏发现、D1 窗口就绪和运行监测。仅选择唯一的非默认 INTERNAL 外屏，编号动态读取，仍通过 CoverDisplay 的面板尺寸规则识别。屏幕 0 捕获、窗口实际位置、外屏亮起、双屏状态和恢复守卫检查保留；禁用或切换中的系统外屏不被视为就绪。不创建虚拟屏，不改变显示器启用状态、分辨率或密度。
+
+测试者覆盖安装后仍从原失败入口启动；失败时先复制完整诊断，确认版本为 build.7 后发回。新日志的 `shell logical displays (app list incomplete)` 表示已使用系统补充查询，包含 ID、尺寸、状态、enabled 和 transition。若进入 W2/D1，说明已越过原来的单次应用枚举障碍，仍须查看窗口路由和首帧结果；实际修复结论等待远端真机反馈。
+
+验证：42 项 AutoCast JVM 测试通过，Release/Debug/测试 APK 构建通过，独立代码复查通过；Android 36 模拟器的延迟显示发现、真实系统逻辑信息解析及虚拟屏排除检查通过，完整诊断复制检查通过。模拟器检查发现并修正了 Android ICU 对未转义右花括号的正则兼容问题，最终版本已在 Android 上复测解析通过。Release 签名与 build.6 一致，模拟器从 100006 覆盖升级到 100007 成功且首次安装时间保持不变，主界面启动成功。未新增维护者或测试者三星真机的折叠、视频首帧与退出恢复验证。
+
+## 外屏等待与远程诊断（build.6）
+
+[下载 ARM64 Release APK](ScrcpyForzFlip5-0.6.6-flip5.13-build.6-arm64-v8a-release.apk) · [SHA256 校验文件](ScrcpyForzFlip5-0.6.6-flip5.13-build.6-arm64-v8a-release.apk.sha256)
+
+2026-10-09，版本 `0.6.6-flip5.13-build.6`，`versionCode 100006`。沿用 build.5 的应用 ID、显示名称及 Release 签名。双屏切换后外屏发现从固定等待 1 秒、单次查询改为最多 5 秒轮询；发现外屏后启动窗口，再等待亮屏和窗口位置就绪，期间复核双屏与合盖状态。保留原有 25 秒启动守卫、捕获源和屏幕恢复规则。
+
+`W1` 现在表示等待外屏出现，`W2` 表示重新打开窗口，`D1` 表示窗口及显示器就绪检查。日志增加相对时间、系统构建、显示变化，以及失败前限时采集的系统显示摘要；仅保存必要字段。此包用于另一位 SM-F741N 测试者的日志调试，维护者本机未复现，不表示已确认对方机型修复。
+
+远程复测：覆盖安装后从原先失败的入口启动。失败时先复制完整诊断再重试，确认首行版本为 build.6；成功时反馈是否有画面、可操作，以及结束投屏后是否正常返回。无需修改分辨率、密度或捕获源。若仍失败，新日志用于区分外屏迟到、双屏退出、系统与应用枚举差异，以及窗口路由失败。
+
+验证：32 项 AutoCast JVM 测试通过；Android 36 专用模拟器通过延迟显示器发现及真实系统显示摘要检查、12 项恢复守卫测试、完整诊断复制测试。复制测试初次被模拟器 System UI 无响应弹窗抢占焦点，关闭该弹窗后单独复测通过。Release 构建及签名校验通过，签名与 build.5 验证记录一致；模拟器从 build.5 覆盖升级成功，首次安装时间和现有偏好文件校验值不变，主界面启动成功。未在维护者真机安装，也未验证测试者 SM-F741N 的物理双屏行为。
+
+## Flip5 / Flip6 机型识别与状态提示（build.5）
+
+[下载 ARM64 Release APK](ScrcpyForzFlip5-0.6.6-flip5.12-build.5-arm64-v8a-release.apk) · [SHA256 校验文件](ScrcpyForzFlip5-0.6.6-flip5.12-build.5-arm64-v8a-release.apk.sha256)
+
+2026-10-09，版本 `0.6.6-flip5.12-build.5`，`versionCode 100005`。包名仍为 `io.github.quildren.scrcpyforzflip5`，应用名称仍为 `ScrcpyForzFlip5`，沿用保留的 Release 签名。加入 `SM-F731*`、`SM-F741*` 前缀匹配及 `SC-54D`、`SCG23`、`SC-54E`、`SCG29` 日版精确匹配，覆盖三星官方清单中的两代 20 个型号。所有入口复用原有双屏准备与捕获源检查。
+
+设备页“激活zlip内屏”标题旁显示本机型号与识别结果，符合条件用绿字，不符合用红字并禁用开关。小组件和通知标题更新为“Flip5/6 内屏投屏”。“符合条件”表示机型符合名单，不表示已经连接、激活或完成该地区 One UI 真机验证。
+
+验证：62 项 JVM 测试、6 项模拟器 UI/入口测试通过，Release 构建与签名校验通过。UI 测试覆盖深浅主题中的实际绿／红像素、标题同行、窄窗口换行、支持机型开关切换、不支持机型禁用，以及入口别名、小组件和快捷设置注册。未新增 Flip6 / 日版物理折叠、双屏激活、出画面或退出恢复的真机验证。
+
+## ScrcpyForzFlip5 Release 安装包
+
+[下载 ARM64 Release APK](ScrcpyForzFlip5-0.6.6-flip5.11-build.4-arm64-v8a-release.apk) · [SHA256 校验文件](ScrcpyForzFlip5-0.6.6-flip5.11-build.4-arm64-v8a-release.apk.sha256)
+
+2026-10-08 的新包名版本：显示名称 `ScrcpyForzFlip5`，应用 ID `io.github.quildren.scrcpyforzflip5`，版本 `0.6.6-flip5.11-build.4`，`versionCode 100004`。沿用保留的 Release 签名密钥，可与原版及旧包名版本同时安装。新包名有独立数据，旧设置、设备与配对记录不会自动迁移；后续更新保持此包名与签名密钥不变，并递增版本号。
+
+验证通过：60 项 JVM 测试、Release 构建与 APK 签名校验。专用 Android 36 ARM64 模拟器中，新旧包同时安装且 UID 不同，旧包 APK 路径保持不变；新包主界面启动成功，`.AutoCastActivity` 可解析并进入预期的非 Flip5 机型提示，未发现应用崩溃。未新增物理 Flip5 / One UI 折叠或 USB 实机验证。
+
+外部快捷动作需改为 `io.github.quildren.scrcpyforzflip5/.AutoCastActivity`，强制停止等命令也需使用新包名。旧版记录见下文。
+
+## 旧包名 Release 安装包（历史记录）
+
+[下载 ARM64 Release APK](ScrcpyForAndroid-0.6.6-flip5.11-build.3-arm64-v8a-release.apk) · [SHA256 校验文件](ScrcpyForAndroid-0.6.6-flip5.11-build.3-arm64-v8a-release.apk.sha256)
+
+2026-10-04 从当前源码重新构建，版本 `0.6.6-flip5.11-build.3`，`versionCode 100003`，应用 ID `io.github.miuzarte.scrcpyforandroid`。沿用仓库已有 Release 密钥，与 GitHub 已发布 Release 签名一致。后续更新继续使用同一密钥和递增版本号，可直接覆盖安装并保留应用数据；本地打包步骤见 [构建说明](../README.md#本地构建)。
+
+本次通过 Release 构建、60 项 JVM 测试及 APK 签名校验。独立 Android 36 ARM64 模拟器从已发布 build.2（100002）覆盖升级到本包（100003）成功，首次安装时间不变，设置、设备记录、密码存储和数据标记文件的校验值一致，升级后主界面启动正常。此次没有新增物理 Flip5 / One UI 折叠验证。
+
 ## Android 测试版
 
 最新实验安装包：[ScrcpyForAndroid-0.6.6-flip5.11-arm64-debug.apk](ScrcpyForAndroid-0.6.6-flip5.11-arm64-debug.apk)，versionCode 58，ARM64 Debug。结束投屏后返回软件主界面，合盖时关闭内屏并保留外屏显示。退出先经过三星的仅外屏模式，再解除临时覆盖，避免直接 reset 引发 `device_folded` 休眠；没有休眠后唤醒操作。阿田预先开启的双屏也使用同一收尾路径，其命令无需修改。详细步骤见 [一键说明](../README.md#一键打开内屏flip511-实验版)。

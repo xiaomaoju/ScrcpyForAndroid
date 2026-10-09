@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.view.Display
+import io.github.miuzarte.scrcpyforandroid.BuildConfig
 import io.github.miuzarte.scrcpyforandroid.MainActivity
 import io.github.miuzarte.scrcpyforandroid.models.ConnectionTarget
 import io.github.miuzarte.scrcpyforandroid.models.DeviceConnectionType
@@ -16,7 +17,7 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 
 internal object AutoCastIntents {
-    const val ACTION_OPEN = "io.github.miuzarte.scrcpyforandroid.OPEN_INNER_SCREEN"
+    const val ACTION_OPEN = "${BuildConfig.APPLICATION_ID}.OPEN_INNER_SCREEN"
     const val EXTRA_START_APP = "autocast.start_app"
     const val EXTRA_EXTERNAL_INNER = "autocast.external_inner_request"
 
@@ -25,7 +26,7 @@ internal object AutoCastIntents {
 
     // Preserve the legacy launcher's explicit inner-screen request after a force-stop.
     fun isExternalInnerRequest(intent: Intent?): Boolean =
-        intent?.component?.className == "io.github.miuzarte.scrcpyforandroid.AutoCastActivity"
+        intent?.component?.className == "${BuildConfig.APPLICATION_ID}.AutoCastActivity"
 
     suspend fun isLocalTarget(target: ConnectionTarget?): Boolean = withContext(Dispatchers.IO) {
         target != null && target.connectionType == DeviceConnectionType.LAN && target.port in 1..65535 && runCatching {

@@ -61,9 +61,12 @@ jobs:
         run: |
           set -euo pipefail
           base_version=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)"/\1/p' app/build.gradle.kts)
+          base_code=$(sed -nE 's/^[[:space:]]*versionCode = .*\?: ([0-9]+)$/\1/p' app/build.gradle.kts)
           [[ "$base_version" =~ ^[0-9A-Za-z][0-9A-Za-z._-]*$ ]]
-          version_name="${base_version}-build.${GITHUB_RUN_NUMBER}"
-          version_code=$((100000 + GITHUB_RUN_NUMBER))
+          [[ "$base_code" =~ ^[0-9]+$ && "$base_code" -ge 100000 ]]
+          # Local signed builds may already be ahead of the Actions run counter.
+          version_code=$((base_code + GITHUB_RUN_NUMBER))
+          version_name="${base_version}-build.$((version_code - 100000))"
           tag="v${version_name}"
           if [[ "$GITHUB_REF_TYPE" == tag ]]; then
             tag="$GITHUB_REF_NAME"
@@ -110,11 +113,11 @@ jobs:
           apk=app/build/outputs/apk/release/app-arm64-v8a-release.apk
           "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --verbose "$apk"
           mkdir -p Cache/release
-          asset="ScrcpyForAndroid-${RELEASE_VERSION}-arm64-v8a.apk"
+          asset="ScrcpyForzFlip5-${RELEASE_VERSION}-arm64-v8a.apk"
           cp "$apk" "Cache/release/$asset"
           (cd Cache/release && sha256sum "$asset" > SHA256SUMS.txt)
           {
-            echo '# Samsung Galaxy Z Flip5 专用版'
+            echo '# ScrcpyForzFlip5 · Samsung Galaxy Z Flip5 专用版'
             echo
             echo '适用于三星 Galaxy Z Flip5（SM-F731 系列），ARM64，已签名 Release APK。'
             echo '这是 main / 版本标签的自动构建，不代表完成新的真机回归。'
@@ -124,7 +127,7 @@ jobs:
             echo "- [下载 APK](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${asset})"
             echo "- [功能与使用说明](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/README.md)"
             echo
-            echo '首次从旧 Debug 测试版或其他签名版本切换时，需要先卸载旧版（请先备份应用数据）；后续自动发布版本使用同一密钥，可覆盖升级。'
+            echo '应用 ID：io.github.quildren.scrcpyforzflip5，可与原版共存；首次安装不会迁移旧包名的数据。后续同包名 Release 使用同一密钥，可覆盖升级。同包名的 Debug 或其他签名版本需先备份数据再卸载。'
           } > Cache/release/RELEASE_NOTES.md
 
       - name: Upload build artifacts

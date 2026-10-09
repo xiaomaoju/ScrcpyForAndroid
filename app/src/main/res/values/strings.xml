@@ -3,7 +3,9 @@
     <string name="autocast_tile_name">Inner screen cast</string>
     <string name="device_activate_flip_inner">Activate zlip inner screen</string>
     <string name="device_activate_flip_inner_summary">Prepare the inner screen when mirroring this phone on its cover; applies next time</string>
-    <string name="app_name">Scrcpy for Android</string>
+    <string name="device_flip_model_supported">%1$s · Supported</string>
+    <string name="device_flip_model_unsupported">%1$s · Unsupported</string>
+    <string name="app_name">ScrcpyForzFlip5</string>
 
     <!-- Main Tab Labels -->
     <string name="main_tab_devices">Devices</string>
@@ -645,7 +647,7 @@
     <string name="cover_remote_back">Remote Back</string>
     <string name="cover_remote_home">Remote Home</string>
     <string name="cover_remote_recent">Remote recent apps</string>
-    <string name="autocast_name">Flip5 inner screen</string>
+    <string name="autocast_name">Flip5/6 inner screen</string>
     <string name="autocast_open">Open inner screen</string>
     <string name="autocast_continue">Continue</string>
     <string name="autocast_repair">Repair connection</string>
@@ -661,7 +663,7 @@
     <string name="autocast_recovering">Restoring the connection…</string>
     <string name="autocast_stopping">Restoring normal screen behavior…</string>
     <string name="autocast_failed">Could not open the inner screen</string>
-    <string name="autocast_unsupported">This shortcut requires a Samsung Galaxy Z Flip5.</string>
+    <string name="autocast_unsupported">This shortcut requires a Samsung Galaxy Z Flip5 or Z Flip6.</string>
     <string name="autocast_end">End mirroring</string>
     <string name="autocast_close">Close</string>
     <string name="autocast_retry">Try again</string>
@@ -669,8 +671,8 @@
     <string name="autocast_setup_action">Open wireless debugging</string>
     <string name="autocast_pair_code">Enter pairing code</string>
     <string name="autocast_notification_needed">Notifications are needed to enter the pairing code without closing the system pairing window. Tap the setup button to enable notifications, then return here.</string>
-    <string name="autocast_setup_hint">Enable Developer options and Wireless debugging. Select Pair device with pairing code. Keep that window open, pull down notifications, and enter its six-digit code in the Flip5 inner screen notification. The phone address and port are found automatically.</string>
-    <string name="autocast_add_widget">In Settings → Cover screen → Widgets, add Flip5 inner screen. After setup, tap Open inner screen on the cover to connect and start automatically.</string>
+    <string name="autocast_setup_hint">Enable Developer options and Wireless debugging. Select Pair device with pairing code. Keep that window open, pull down notifications, and enter its six-digit code in the Flip5/6 inner screen notification. The phone address and port are found automatically.</string>
+    <string name="autocast_add_widget">In Settings → Cover screen → Widgets, add Flip5/6 inner screen. After setup, tap Open inner screen on the cover to connect and start automatically.</string>
     <string name="autocast_control_hint">Slide to move, tap to click. End mirroring restores the temporary fold state.</string>
     <string name="autocast_copy_diagnostics">Copy diagnostics</string>
     <string name="autocast_diagnostics_copied">Diagnostics copied</string>
